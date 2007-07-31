@@ -1,15 +1,157 @@
 Source: psx-bios
-Section: games
+Section: non-free/games
 Priority: extra
 Maintainer: Frederic Briere <fbriere@fbriere.net>
 Build-Depends: debhelper (>> 3.0.0)
 Standards-Version: 3.5.2
 
-Package: psx-bios
+Package: psx-bios-scph1000
 Architecture: all
-Description: Sony PlayStation BIOS
- This package contains dumps of all known versions of the Sony PlayStation
- BIOS; you will probably need one of those if you want to run a PSX emulator.
+Provides: psx-bios
+Description: Sony PlayStation BIOS (SCPH1000)
+ This package contains a dump of the Sony PlayStation model SCPH1000 BIOS.
  .
- (Of course, distribution of these files is not really quite legal, if you
- know what I mean.)
+ Most PSX emulators require a genuine PlayStation BIOS; even those that
+ don't (because they come with an emulated BIOS) will usually work better
+ with one.  Some BIOS versions work better than others; you can install
+ more than one package concurrently.
+ .
+ You should only download this package if you own a Sony PlayStation, model
+ SCPH1000.  The BIOS included is copyrighted by Sony Computer Entertainment.
+ Download and use at your own risk.
+
+Package: psx-bios-scph1001
+Architecture: all
+Provides: psx-bios
+Description: Sony PlayStation BIOS (SCPH1001)
+ This package contains a dump of the Sony PlayStation model SCPH1001 BIOS.
+ .
+ Most PSX emulators require a genuine PlayStation BIOS; even those that
+ don't (because they come with an emulated BIOS) will usually work better
+ with one.  Some BIOS versions work better than others; you can install
+ more than one package concurrently.
+ .
+ You should only download this package if you own a Sony PlayStation, model
+ SCPH1001.  The BIOS included is copyrighted by Sony Computer Entertainment.
+ Download and use at your own risk.
+
+Package: psx-bios-scph1002
+Architecture: all
+Provides: psx-bios
+Description: Sony PlayStation BIOS (SCPH1002)
+ This package contains a dump of the Sony PlayStation model SCPH1002 BIOS.
+ .
+ Most PSX emulators require a genuine PlayStation BIOS; even those that
+ don't (because they come with an emulated BIOS) will usually work better
+ with one.  Some BIOS versions work better than others; you can install
+ more than one package concurrently.
+ .
+ You should only download this package if you own a Sony PlayStation, model
+ SCPH1002.  The BIOS included is copyrighted by Sony Computer Entertainment.
+ Download and use at your own risk.
+
+Package: psx-bios-scph5000
+Architecture: all
+Provides: psx-bios
+Description: Sony PlayStation BIOS (SCPH5000)
+ This package contains a dump of the Sony PlayStation model SCPH5000 BIOS.
+ .
+ Most PSX emulators require a genuine PlayStation BIOS; even those that
+ don't (because they come with an emulated BIOS) will usually work better
+ with one.  Some BIOS versions work better than others; you can install
+ more than one package concurrently.
+ .
+ You should only download this package if you own a Sony PlayStation, model
+ SCPH5000.  The BIOS included is copyrighted by Sony Computer Entertainment.
+ Download and use at your own risk.
+
+Package: psx-bios-scph5500
+Architecture: all
+Provides: psx-bios
+Description: Sony PlayStation BIOS (SCPH5500)
+ This package contains a dump of the Sony PlayStation model SCPH5500 BIOS.
+ .
+ Most PSX emulators require a genuine PlayStation BIOS; even those that
+ don't (because they come with an emulated BIOS) will usually work better
+ with one.  Some BIOS versions work better than others; you can install
+ more than one package concurrently.
+ .
+ You should only download this package if you own a Sony PlayStation, model
+ SCPH5500.  The BIOS included is copyrighted by Sony Computer Entertainment.
+ Download and use at your own risk.
+
+Package: psx-bios-scph5502
+Architecture: all
+Provides: psx-bios
+Description: Sony PlayStation BIOS (SCPH5502)
+ This package contains a dump of the Sony PlayStation model SCPH5502 BIOS.
+ .
+ Most PSX emulators require a genuine PlayStation BIOS; even those that
+ don't (because they come with an emulated BIOS) will usually work better
+ with one.  Some BIOS versions work better than others; you can install
+ more than one package concurrently.
+ .
+ You should only download this package if you own a Sony PlayStation, model
+ SCPH5502.  The BIOS included is copyrighted by Sony Computer Entertainment.
+ Download and use at your own risk.
+
+Package: psx-bios-scph7000
+Architecture: all
+Provides: psx-bios
+Description: Sony PlayStation BIOS (SCPH7000)
+ This package contains a dump of the Sony PlayStation model SCPH7000 BIOS.
+ .
+ Most PSX emulators require a genuine PlayStation BIOS; even those that
+ don't (because they come with an emulated BIOS) will usually work better
+ with one.  Some BIOS versions work better than others; you can install
+ more than one package concurrently.
+ .
+ You should only download this package if you own a Sony PlayStation, model
+ SCPH7000.  The BIOS included is copyrighted by Sony Computer Entertainment.
+ Download and use at your own risk.
+
+Package: psx-bios-scph7001
+Architecture: all
+Provides: psx-bios
+Description: Sony PlayStation BIOS (SCPH7001)
+ This package contains a dump of the Sony PlayStation model SCPH7001 BIOS.
+ .
+ Most PSX emulators require a genuine PlayStation BIOS; even those that
+ don't (because they come with an emulated BIOS) will usually work better
+ with one.  Some BIOS versions work better than others; you can install
+ more than one package concurrently.
+ .
+ You should only download this package if you own a Sony PlayStation, model
+ SCPH7001.  The BIOS included is copyrighted by Sony Computer Entertainment.
+ Download and use at your own risk.
+
+Package: psx-bios-scph7003
+Architecture: all
+Provides: psx-bios
+Description: Sony PlayStation BIOS (SCPH7003)
+ This package contains a dump of the Sony PlayStation model SCPH7003 BIOS.
+ .
+ Most PSX emulators require a genuine PlayStation BIOS; even those that
+ don't (because they come with an emulated BIOS) will usually work better
+ with one.  Some BIOS versions work better than others; you can install
+ more than one package concurrently.
+ .
+ You should only download this package if you own a Sony PlayStation, model
+ SCPH7003.  The BIOS included is copyrighted by Sony Computer Entertainment.
+ Download and use at your own risk.
+
+Package: psx-bios-scph7502
+Architecture: all
+Provides: psx-bios
+Description: Sony PlayStation BIOS (SCPH7502)
+ This package contains a dump of the Sony PlayStation model SCPH7502 BIOS.
+ .
+ Most PSX emulators require a genuine PlayStation BIOS; even those that
+ don't (because they come with an emulated BIOS) will usually work better
+ with one.  Some BIOS versions work better than others; you can install
+ more than one package concurrently.
+ .
+ You should only download this package if you own a Sony PlayStation, model
+ SCPH7502.  The BIOS included is copyrighted by Sony Computer Entertainment.
+ Download and use at your own risk.
+

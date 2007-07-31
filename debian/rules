@@ -43,9 +43,8 @@ install: build
 	dh_testdir
 	dh_testroot
 	dh_clean -k
-	dh_installdirs
-
-	cp -d *.bin debian/psx-bios/usr/share/psx-bios
+	dh_installdirs -A usr/share/games/psx-bios
+	dh_install
 
 
 # Build architecture-independent files here.
@@ -57,27 +56,27 @@ binary-arch: build install
 	dh_testdir
 	dh_testroot
 #	dh_installdebconf	
-	dh_installdocs
-	dh_installexamples
-	dh_installmenu
+	dh_installdocs -A README
+#	dh_installexamples
+#	dh_installmenu
 #	dh_installlogrotate
 #	dh_installemacsen
 #	dh_installpam
 #	dh_installmime
 #	dh_installinit
-	dh_installcron
-	dh_installman
-	dh_installinfo
+#	dh_installcron
+#	dh_installman
+#	dh_installinfo
 #	dh_undocumented
-	dh_installchangelogs 
+	dh_installchangelogs NEWS
 	dh_link
-	dh_strip
+#	dh_strip
 	dh_compress
 	dh_fixperms
 #	dh_makeshlibs
 	dh_installdeb
 #	dh_perl
-	dh_shlibdeps
+#	dh_shlibdeps
 	dh_gencontrol
 	dh_md5sums
 	dh_builddeb

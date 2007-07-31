@@ -1,3 +1,10 @@
+psx-bios (3-0fbriere.1) woody sarge sid; urgency=low
+
+  * Split each rom in its own package
+  * Moved to non-free
+
+ -- Frederic Briere <fbriere@fbriere.net>  Sat, 31 Jan 2004 21:55:54 -0500
+
 psx-bios (2-0.fred.1) woody sarge sid; urgency=low
 
   * Added SCPH7502
