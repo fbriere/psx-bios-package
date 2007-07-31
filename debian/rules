@@ -45,12 +45,7 @@ install: build
 	dh_clean -k
 	dh_installdirs
 
-	mkdir debian/tmp
-	for z in bios/*; do unzip $$z -d debian/tmp; done
-
-	for z in debian/tmp/*.{bin,BIN}; do	\
-		mv $$z debian/psx-bios/usr/share/psx-bios/$$(basename $$(echo $$z | tr 'A-Z' 'a-z'));	\
-		done
+	cp -d *.bin debian/psx-bios/usr/share/psx-bios
 
 
 # Build architecture-independent files here.

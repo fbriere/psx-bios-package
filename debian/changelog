@@ -1,3 +1,11 @@
+psx-bios (2-0.fred.1) woody sarge sid; urgency=low
+
+  * Added SCPH7502
+  * Removed duplicate
+  * Moved to a simpler archive format
+
+ -- Frederic Briere <fbriere@fbriere.net>  Sat, 28 Jun 2003 15:15:56 -0400
+
 psx-bios (1-0.fred.1) woody sarge sid; urgency=low
 
   * Initial Release.
