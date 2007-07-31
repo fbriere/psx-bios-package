@@ -1,3 +1,10 @@
+psx-bios (3-1~fbriere.2) unstable; urgency=low
+
+  * Switched over to CDBS
+  * Fixed a couple of lintian warnings
+
+ -- Frédéric Brière <fbriere@fbriere.net>  Sun, 24 Jun 2007 11:16:57 -0400
+
 psx-bios (3-0fbriere.1) woody sarge sid; urgency=low
 
   * Split each rom in its own package
