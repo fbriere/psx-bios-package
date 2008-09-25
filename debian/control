@@ -2,7 +2,7 @@ Source: psx-bios
 Section: non-free/games
 Priority: extra
 Maintainer: Frédéric Brière <fbriere@fbriere.net>
-Build-Depends: cdbs (>> 0.4.4), debhelper (>> 4)
+Build-Depends: cdbs (>> 0.4.4), debhelper (>> 5)
 Standards-Version: 3.7.2
 
 Package: psx-bios-scph1000

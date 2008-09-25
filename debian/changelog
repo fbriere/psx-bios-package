@@ -1,3 +1,9 @@
+psx-bios (3-1~fbriere.4) UNRELEASED; urgency=low
+
+  * Bumped debhelper compat level to 5
+
+ -- Frédéric Brière <fbriere@fbriere.net>  Thu, 25 Sep 2008 18:17:33 -0400
+
 psx-bios (3-1~fbriere.3) unstable; urgency=low
 
   * Bumping version to force a new upload
