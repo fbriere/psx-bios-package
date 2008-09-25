@@ -1,6 +1,7 @@
 psx-bios (3-1~fbriere.4) UNRELEASED; urgency=low
 
   * Bumped debhelper compat level to 5
+  * Added Vcs-* control fields
 
  -- Frédéric Brière <fbriere@fbriere.net>  Thu, 25 Sep 2008 18:17:33 -0400
 
