@@ -5,7 +5,7 @@ Maintainer: Frédéric Brière <fbriere@fbriere.net>
 Build-Depends: cdbs (>> 0.4.4), debhelper (>= 5)
 Standards-Version: 3.8.0
 Vcs-Git: http://git.fbriere.net/debian/psx-bios.git
-Vcs-Browser: http://git.debian.org/debian/psx-bios.git/
+Vcs-Browser: http://git.fbriere.net/debian/psx-bios.git/
 
 Package: psx-bios-scph1000
 Architecture: all
