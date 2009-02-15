@@ -1,11 +1,11 @@
-psx-bios (3-1~fbriere.4) UNRELEASED; urgency=low
+psx-bios (3-1~fbriere.4) unstable; urgency=low
 
   * Bumped debhelper compat level to 5
   * Added Vcs-* control fields
   * Bumped Standards-Version to 3.8.0
   * Added ${misc:Depends} to appease lintian
 
- -- Frédéric Brière <fbriere@fbriere.net>  Thu, 25 Sep 2008 18:17:33 -0400
+ -- Frédéric Brière <fbriere@fbriere.net>  Sun, 15 Feb 2009 13:07:57 -0500
 
 psx-bios (3-1~fbriere.3) unstable; urgency=low
 
