@@ -6,6 +6,7 @@ Build-Depends: debhelper (>= 9)
 Standards-Version: 3.9.4
 Vcs-Git: http://git.fbriere.net/debian/psx-bios.git
 Vcs-Browser: http://git.fbriere.net/debian/psx-bios.git/
+Bugs: mailto:fbriere@fbriere.net
 
 Package: psx-bios-scph1000
 Architecture: all
