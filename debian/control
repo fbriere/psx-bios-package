@@ -12,6 +12,7 @@ Package: psx-bios-scph1000
 Architecture: all
 Depends: ${misc:Depends}
 Provides: psx-bios
+Enhances: pcsxr
 Description: Sony PlayStation BIOS (SCPH1000)
  This package contains a dump of the Sony PlayStation model SCPH1000 BIOS.
  .
@@ -28,6 +29,7 @@ Package: psx-bios-scph1001
 Architecture: all
 Depends: ${misc:Depends}
 Provides: psx-bios
+Enhances: pcsxr
 Description: Sony PlayStation BIOS (SCPH1001)
  This package contains a dump of the Sony PlayStation model SCPH1001 BIOS.
  .
@@ -44,6 +46,7 @@ Package: psx-bios-scph1002
 Architecture: all
 Depends: ${misc:Depends}
 Provides: psx-bios
+Enhances: pcsxr
 Description: Sony PlayStation BIOS (SCPH1002)
  This package contains a dump of the Sony PlayStation model SCPH1002 BIOS.
  .
@@ -60,6 +63,7 @@ Package: psx-bios-scph5000
 Architecture: all
 Depends: ${misc:Depends}
 Provides: psx-bios
+Enhances: pcsxr
 Description: Sony PlayStation BIOS (SCPH5000)
  This package contains a dump of the Sony PlayStation model SCPH5000 BIOS.
  .
@@ -76,6 +80,7 @@ Package: psx-bios-scph5500
 Architecture: all
 Depends: ${misc:Depends}
 Provides: psx-bios
+Enhances: pcsxr
 Description: Sony PlayStation BIOS (SCPH5500)
  This package contains a dump of the Sony PlayStation model SCPH5500 BIOS.
  .
@@ -92,6 +97,7 @@ Package: psx-bios-scph5502
 Architecture: all
 Depends: ${misc:Depends}
 Provides: psx-bios
+Enhances: pcsxr
 Description: Sony PlayStation BIOS (SCPH5502)
  This package contains a dump of the Sony PlayStation model SCPH5502 BIOS.
  .
@@ -108,6 +114,7 @@ Package: psx-bios-scph7000
 Architecture: all
 Depends: ${misc:Depends}
 Provides: psx-bios
+Enhances: pcsxr
 Description: Sony PlayStation BIOS (SCPH7000)
  This package contains a dump of the Sony PlayStation model SCPH7000 BIOS.
  .
@@ -124,6 +131,7 @@ Package: psx-bios-scph7001
 Architecture: all
 Depends: ${misc:Depends}
 Provides: psx-bios
+Enhances: pcsxr
 Description: Sony PlayStation BIOS (SCPH7001)
  This package contains a dump of the Sony PlayStation model SCPH7001 BIOS.
  .
@@ -140,6 +148,7 @@ Package: psx-bios-scph7003
 Architecture: all
 Depends: ${misc:Depends}
 Provides: psx-bios
+Enhances: pcsxr
 Description: Sony PlayStation BIOS (SCPH7003)
  This package contains a dump of the Sony PlayStation model SCPH7003 BIOS.
  .
@@ -156,6 +165,7 @@ Package: psx-bios-scph7502
 Architecture: all
 Depends: ${misc:Depends}
 Provides: psx-bios
+Enhances: pcsxr
 Description: Sony PlayStation BIOS (SCPH7502)
  This package contains a dump of the Sony PlayStation model SCPH7502 BIOS.
  .
