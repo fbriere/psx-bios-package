@@ -1,3 +1,15 @@
+psx-bios (1:3-1~fbriere+5) unstable; urgency=low
+
+  * Added Bugs header to control file
+  * Added Enhances: pcsxr
+  * Changed Debian version format to appease lintian
+  * Various packaging tweaks and updates
+    - Switched source package format to 3.0 (quilt)
+    - Switched from CDBS to dh 9
+    - Bumped Standards-Version to 3.9.4
+
+ -- Frédéric Brière <fbriere@fbriere.net>  Mon, 20 May 2013 18:24:56 -0400
+
 psx-bios (3-1~fbriere.4) unstable; urgency=low
 
   * Bumped debhelper compat level to 5
