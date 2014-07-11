@@ -1,0 +1,296 @@
+#!/bin/sh
+#
+# psx-bios-package - build a Debian package of psx-bios
+#
+# Copyright © 2014 Frédéric Brière <fbriere@fbriere.net>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+set -e
+
+VERSION=6
+
+
+usage() {
+	cat <<EOF
+Usage: $0 [ <options> ... ] [ <url> | <filename> ]
+
+Options:
+  --fullname <name>            Full name in Maintainer field  [$OPT_FULLNAME]
+  --email <email>              Email address in Maintainer field  [$OPT_EMAIL]
+  --revision-append <string>   Append to the revision number  [$OPT_REVISION_APPEND]
+  --compress-type <type>       Compression type of resulting package  [$OPT_COMPRESS_TYPE]
+  --compress-level <level>     Compression level of resulting package  [${OPT_COMPRESS_LEVEL:-<default>}]
+
+  --model <model>              PlayStation model name  [<none>]
+  --package-append <string>    Append to the package name  [<none>]
+
+  --force                      Override safety checks
+
+  --help                       Show this help message
+  --version                    Show the version.
+EOF
+}
+
+# Set default args early on -- they may be displayed in usage()
+set_default_args() {
+	# (This is mostly copied from googleearth-package)
+	local SYS_MAILNAME="$(cat /etc/mailname 2>/dev/null)"
+	OPT_FULLNAME="${DEBFULLNAME:-${NAME:-$(getent passwd "$(whoami)" | cut -d ':' -f 5 | cut -d ',' -f 1)}}"
+	OPT_EMAIL="${DEBEMAIL:-${EMAIL:-$(whoami)@${SYS_MAILNAME:-$(hostname --fqdn)}}}"
+
+	OPT_REVISION_APPEND="+local"
+
+	# The resulting package will typically be installed right away, so
+	# there's no need to resort to the much slower xz compression type.
+	OPT_COMPRESS_TYPE=gzip
+	OPT_COMPRESS_LEVEL=
+}
+
+# Process command-line arguments, setting $OPT_* variables
+parse_args() {
+	local ARG
+
+	while [ $# -gt 0 ]; do
+		ARG="$1"
+		shift
+
+		case "$ARG" in
+			--fullname)
+				OPT_FULLNAME="$1"
+				shift
+				;;
+			--email)
+				OPT_EMAIL="$1"
+				shift
+				;;
+			--revision-append)
+				OPT_REVISION_APPEND="$1"
+				shift
+				;;
+			--compress-type)
+				OPT_COMPRESS_TYPE="$1"
+				shift
+				case "$OPT_COMPRESS_TYPE" in
+					gzip|xz|bzip2|lzma|none) true ;;
+					*)
+						echo "Unknown compression type $OPT_COMPRESS_TYPE" >&2
+						if [ "$OPT_FORCE" = true ]; then
+							echo "Ignoring as requested by --force" >&2
+						else
+							exit 1
+						fi
+						;;
+				esac
+				;;
+			--compress-level)
+				OPT_COMPRESS_LEVEL="$1"
+				shift
+				;;
+			--model)
+				OPT_MODEL="$1"
+				shift
+				;;
+			--package-append)
+				OPT_PKGNAME_APPEND="$1"
+				shift
+				;;
+			--force)
+				OPT_FORCE=true
+				;;
+			--help)
+				usage
+				exit 0
+				;;
+			--version)
+				echo "make-eawpatches-package version $VERSION"
+				exit 0
+				;;
+			--*)
+				echo "$0: unknown option $ARG" >&2
+				echo "Try '$0 --help' for more information." >&2
+				exit 1
+				;;
+			*)
+				# Only allow one source
+				if [ "$OPT_SOURCE" ]; then
+					usage
+					exit 1
+				else
+					OPT_SOURCE="$ARG"
+				fi
+				;;
+		esac
+	done
+}
+
+# Inspired by googleearth-package
+verify_sanity() {
+	if [ $(id --user) -eq 0 ]; then
+		echo 'Refusing to run as root; use --force to override.' >&2
+		return 1
+	fi
+
+	if [ -u . -o -g . ]; then
+		echo 'Refusing to build in a setuid/setgid directory; use --force to override.' >&2
+		return 1
+	fi
+}
+
+# Set up download() - download <url> <output-file>
+if which wget > /dev/null; then
+	download() {
+		wget "$1" -O "$2" || return 1
+	}
+elif which curl > /dev/null; then
+	download() {
+		curl "$1" -o "$2" || return 1
+	}
+else
+	download() {
+		echo 'Either wget or curl is required to download the requested URL.' >&2
+		echo '(Or you can download it yourself and point to it.)' >&2
+		exit 1
+	}
+fi
+
+# TODO
+# Check the MD5 of a file against known values
+check_md5sum() {
+	case "$(md5sum "$1" | cut -d ' ' -f 1)" in
+		*) false ;;
+	esac
+}
+
+# Extract the contents of a (possible) archive
+extract() {
+	local FILE="$1" DEST="$2"
+	shift 2
+
+	# --test-label does not appear to work  :(
+	if tar -t -f "$FILE" >/dev/null 2>&1; then
+		tar x -f "$FILE" -C "$DEST"
+	elif zipinfo -h "$FILE" >/dev/null 2>&1; then
+		unzip -q "$FILE" -d "$DEST"
+	else
+		return 1
+	fi
+}
+
+# Directory where we will find our misc. files
+misc_dir() {
+	local SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
+
+	if [ "$SCRIPT_DIR" = "/usr/bin" ]; then
+		# We are running from an installed Debian package
+		echo "/usr/share/psx-bios-package"
+	elif [ -d "$SCRIPT_DIR/debian" -a -d "$SCRIPT_DIR/psx-bios" ]; then
+		# We appear to be running from the unpacked source
+		echo "$SCRIPT_DIR/psx-bios"
+	else
+		echo "$0: Unable to find misc. files directory" >&2
+		return 1
+	fi
+}
+
+# Build the filesystem tree for our binary package from an unpacked archive.
+build_deb_tree() {
+	local SRC="$1" DEST="$2"
+	shift 2
+
+	local PKGNAME="psx-bios${OPT_PKGNAME_APPEND}"
+
+	# Some additional files that we'll need
+	local SHARE="$(misc_dir)"
+	# We'll refer to this directory a lot
+	local DOC="$DEST/usr/share/doc/${PKGNAME}"
+
+	mkdir -p "$DEST/usr/share/games/psx-bios"
+	cp "$SRC" "$DEST/usr/share/games/psx-bios/"
+
+	# Documentation (under /usr/share/doc/psx-bios[-append])
+	mkdir -p "$DOC"
+	# Same with copyright, and prepend our own header
+	cp "$SHARE/copyright" "$DOC/"
+	if [ -e "$SHARE/../debian/changelog" ]; then
+		gzip -9 -c --no-name "$SHARE/../debian/changelog" > "$DOC/changelog.Debian.gz"
+	else
+		# Borrow the Debian changelog from psx-bios-package
+		cp /usr/share/doc/psx-bios-package/changelog.gz "$DOC/changelog.Debian.gz"
+	fi
+	# Finally, compress anything over 4 KiB (except copyright)
+	find "$DOC" -size +4k \! -name 'copyright' \! -name '*.gz' -print0 \
+		| xargs -0 --no-run-if-empty gzip -9 --no-name
+
+	# DEBIAN directory
+	mkdir -p "$DEST/DEBIAN"
+	sed -e "s/\${local:Maintainer}/${OPT_FULLNAME} <${OPT_EMAIL}>/g" \
+		-e "s/\${local:Revision-Append}/${OPT_REVISION_APPEND}/g" \
+		-e "s/\${local:Model}/${OPT_MODEL}/g" \
+		-e "s/\${local:Package-Append}/${OPT_PKGNAME_APPEND}/g" \
+		"$SHARE/control" > "$DEST/DEBIAN/control"
+	sed -i "s/\${local:Installed-Size}/$(du -k -s --apparent-size "$DEST" | cut -f1)/g" "$DEST/DEBIAN/control"
+	if [ -e "$SHARE/../debian/changelog" ]; then
+		# This is very hackish, but we cannot rely on
+		# dpkg-parsechangelog to be available  :(
+		sed -i "s/\${local:Revision}/$(sed -n '1 s/.*(\(.*\)).*/\1/p' "$SHARE/../debian/changelog")/g" "$DEST/DEBIAN/control"
+	fi
+	# Generate md5sums (which must be relative to $DEST)
+	(cd "$DEST" && find . -type f \! -regex './\(DEBIAN\|etc\)/.*' -printf '%P\0' \
+		| LC_ALL=C sort --zero-terminated \
+		| xargs -0 md5sum) > "$DEST/DEBIAN/md5sums"
+
+	# Fix permissions
+	find "$DEST" -type f -print0 | xargs -0 chmod 644
+	find "$DEST" -type d -print0 | xargs -0 chmod 755
+}
+
+main() {
+	set_default_args
+	parse_args "$@"
+	[ "$OPT_FORCE" != true ] && verify_sanity
+
+	# TODO
+	if [ -z "$OPT_MODEL" ]; then
+		echo "--model must be specified for now" >&2
+		exit 1
+	fi
+	if [ -z "$OPT_SOURCE" ]; then
+		"A filename must be provided for now" >&2
+		exit 1
+	elif [ ! -f "$OPT_SOURCE" ]; then
+		"The source must be a file for now" >&2
+		exit 1
+	fi
+
+	# Make sure the directory exists before going any further
+	misc_dir >/dev/null
+
+	# Temporary workspace
+	local WORK_DIR="$(mktemp --directory --tmpdir)"
+	trap "rm -rf '$WORK_DIR'" EXIT
+
+	mkdir -p "$WORK_DIR/build"
+	build_deb_tree "$OPT_SOURCE" "$WORK_DIR/build"
+
+	fakeroot dpkg-deb --build \
+		-Z${OPT_COMPRESS_TYPE} \
+		${OPT_COMPRESS_LEVEL:+-z$OPT_COMPRESS_LEVEL} \
+		"$WORK_DIR/build" .
+
+	rm -rf "$WORK_DIR"
+	trap - EXIT
+}
+
+main "$@"

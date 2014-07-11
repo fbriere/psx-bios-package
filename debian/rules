@@ -1,3 +1,10 @@
 #!/usr/bin/make -f
 %:
 	dh $@
+
+override_dh_install:
+	dh_install
+	sed -i "s/\$${local:Revision}/$(shell dpkg-parsechangelog | sed -n '/^Version: / s///p')/g" debian/psx-bios-package/usr/share/psx-bios-package/control
+
+override_dh_builddeb:
+	dh_builddeb -- -Zxz

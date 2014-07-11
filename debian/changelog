@@ -1,3 +1,13 @@
+psx-bios-package (6) UNRELEASED; urgency=medium
+
+  * Converted the psx-bios packages to a psx-bios packager
+  * Explicitly select the xz compression type for source and binary
+  * Some packaging tweaks and updates
+    - Mark packages as Multi-Arch: foreign
+    - Bumped Standards-Version to 3.9.5
+
+ -- Frédéric Brière <fbriere@fbriere.net>  Fri, 11 Jul 2014 13:48:16 -0400
+
 psx-bios (1:3-1~fbriere+5) unstable; urgency=low
 
   * Added Bugs header to control file

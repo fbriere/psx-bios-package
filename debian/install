@@ -1,0 +1,2 @@
+make-psx-bios-package  usr/bin
+psx-bios/*             usr/share/psx-bios-package
