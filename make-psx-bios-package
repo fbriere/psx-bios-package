@@ -62,6 +62,9 @@ MODELS="
 	# d8f485717a5237285e4d7c5f881b7f32
 "
 
+BIOS_SIZE=524288
+
+
 usage() {
 	cat <<EOF
 Usage: $0 [ <options> ... ] <filename> [...]
@@ -173,6 +176,8 @@ parse_args() {
 		usage >&2
 		exit 1
 	fi
+
+	# TODO: Only allow --model for a single source
 }
 
 # Inspired by googleearth-package
@@ -253,20 +258,27 @@ misc_dir() {
 }
 
 process_file() {
-	local WORK_DIR="$1" FILENAME="$2"
+	local WORK_DIR="$1" FILENAME="$2" RECURSIVE="$3"
 	shift 2
 
-	rm -i -rf "$WORK_DIR/tmp"
-	mkdir -p "$WORK_DIR/tmp"
-
-	if extract "$FILENAME" "$WORK_DIR/tmp"; then
-		# TODO
-		:
+	if [ ! "$RECURSIVE" ] && mkdir -p "$WORK_DIR/tmp" \
+		&& extract "$FILENAME" "$WORK_DIR/tmp"
+	then
+		if [ "$OPT_MODEL" ]; then
+			echo "--model cannot be used with an archive file" >&2
+			exit 1
+		fi
+		find "$WORK_DIR/tmp" -type f -size ${BIOS_SIZE}c |
+			# Keep in mind that the pipe created a subshell
+			while read FILENAME; do
+				process_file "$WORK_DIR" "$FILENAME" "recursive"
+			done
+		rm -rf "$WORK_DIR/tmp"
 	else
 		local SANITIZED_MODEL
 
 		local MODEL="$(get_model "$FILENAME")"
-		if [ ! "$MODEL" ]; then
+		if [ ! "$MODEL" -a ! "$RECURSIVE" ]; then
 			echo "Cannot determine model for $FILENAME" >&2
 			if [ "$OPT_FORCE" = true -a "$OPT_MODEL" ]; then
 				echo "Overriding as requested by --force" >&2
