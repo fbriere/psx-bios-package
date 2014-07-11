@@ -64,7 +64,7 @@ MODELS="
 
 usage() {
 	cat <<EOF
-Usage: $0 [ <options> ... ] [ <url> | <filename> ]
+Usage: $0 [ <options> ... ] <filename> [...]
 
 Options:
   --fullname <name>            Full name in Maintainer field  [$OPT_FULLNAME]
@@ -163,16 +163,16 @@ parse_args() {
 				exit 1
 				;;
 			*)
-				# Only allow one source
-				if [ "$OPT_SOURCE" ]; then
-					usage
-					exit 1
-				else
-					OPT_SOURCE="$ARG"
-				fi
+				# FIXME: This will break on filenames with spaces
+				OPT_SOURCES="$OPT_SOURCES $ARG"
 				;;
 		esac
 	done
+
+	if [ ! "$OPT_SOURCES" ]; then
+		usage >&2
+		exit 1
+	fi
 }
 
 # Inspired by googleearth-package
@@ -211,7 +211,6 @@ sanitize_name() {
 	echo "$1" | tr '[:upper:]' '[:lower:]' | tr -cd '[:alnum:]+.-' | sed 's/[^[:alnum:]]\+//'
 }
 
-# TODO
 # Check the MD5 of a file against known values
 get_model() {
 	echo "$MODELS" |\
@@ -253,23 +252,48 @@ misc_dir() {
 	fi
 }
 
+process_file() {
+	local WORK_DIR="$1" FILENAME="$2"
+	shift 2
+
+	rm -i -rf "$WORK_DIR/tmp"
+	mkdir -p "$WORK_DIR/tmp"
+
+	if extract "$FILENAME" "$WORK_DIR/tmp"; then
+		# TODO
+		:
+	else
+		local SANITIZED_MODEL
+
+		local MODEL="$(get_model "$FILENAME")"
+		if [ ! "$MODEL" ]; then
+			echo "Cannot determine model for $FILENAME" >&2
+			if [ "$OPT_FORCE" = true -a "$OPT_MODEL" ]; then
+				echo "Overriding as requested by --force" >&2
+			else
+				return 1
+			fi
+		fi
+		if [ "$OPT_MODEL" ]; then
+			MODEL="$OPT_MODEL"
+		fi
+		LAST_MODEL="$MODEL"
+		cp "$FILENAME" "$WORK_DIR/images/$(sanitize_name "$MODEL").bin"
+	fi
+}
+
 # Build the filesystem tree for our binary package from an unpacked archive.
 build_deb_tree() {
 	local SRC="$1" DEST="$2"
 	shift 2
 
-	local MODEL="$OPT_MODEL"
-	if [ ! "$OPT_MODEL" ]; then
-		MODEL="$(get_model "$SRC")"
-		if [ ! "$MODEL" ]; then
-			echo "Cannot determine model for $SRC"
-			exit 1
-		fi
+	local ONLY_MODEL
+	if [ $(ls "$SRC"/* | wc -l) -eq 1 ]; then
+		ONLY_MODEL="$LAST_MODEL"
 	fi
-	local SANITIZED_MODEL="$(sanitize_name "$MODEL")"
 
 	# This also assigns to $OPT_PKGNAME_APPEND
-	local PKGNAME="psx-bios${OPT_PKGNAME_APPEND="-$SANITIZED_MODEL"}"
+	local PKGNAME="psx-bios${OPT_PKGNAME_APPEND=${ONLY_MODEL:+"-$(sanitize_name "$ONLY_MODEL")"}}"
 
 	# Some additional files that we'll need
 	local SHARE="$(misc_dir)"
@@ -277,7 +301,7 @@ build_deb_tree() {
 	local DOC="$DEST/usr/share/doc/${PKGNAME}"
 
 	mkdir -p "$DEST/usr/share/games/psx-bios"
-	cp "$SRC" "$DEST/usr/share/games/psx-bios/${SANITIZED_MODEL}.bin"
+	cp "$SRC"/* "$DEST/usr/share/games/psx-bios/"
 
 	# Documentation (under /usr/share/doc/psx-bios[-append])
 	mkdir -p "$DOC"
@@ -297,7 +321,7 @@ build_deb_tree() {
 	mkdir -p "$DEST/DEBIAN"
 	sed -e "s/\${local:Maintainer}/${OPT_FULLNAME} <${OPT_EMAIL}>/g" \
 		-e "s/\${local:Revision-Append}/${OPT_REVISION_APPEND}/g" \
-		-e "s/\${local:Model}/${MODEL}/g" \
+		-e "s/\${local:Model}/${MODEL:-"various models"}/g" \
 		-e "s/\${local:Package-Append}/${OPT_PKGNAME_APPEND}/g" \
 		"$SHARE/control" > "$DEST/DEBIAN/control"
 	sed -i "s/\${local:Installed-Size}/$(du -k -s --apparent-size "$DEST" | cut -f1)/g" "$DEST/DEBIAN/control"
@@ -321,14 +345,6 @@ main() {
 	parse_args "$@"
 	[ "$OPT_FORCE" != true ] && verify_sanity
 
-	if [ -z "$OPT_SOURCE" ]; then
-		"A filename must be provided for now" >&2
-		exit 1
-	elif [ ! -f "$OPT_SOURCE" ]; then
-		"The source must be a file for now" >&2
-		exit 1
-	fi
-
 	# Make sure the directory exists before going any further
 	misc_dir >/dev/null
 
@@ -336,8 +352,22 @@ main() {
 	local WORK_DIR="$(mktemp --directory --tmpdir)"
 	trap "rm -rf '$WORK_DIR'" EXIT
 
+	local LAST_MODEL
+	mkdir -p "$WORK_DIR/images"
+	for SOURCE in $OPT_SOURCES; do
+		if ! process_file "$WORK_DIR" "$SOURCE"; then
+			echo "Cannot process $SOURCE" >&2
+			exit 1
+		fi
+	done
+
+	if ! ls "$WORK_DIR/images/" >/dev/null 2>&1; then
+		echo "No images found" >&2
+		exit 1
+	fi
+
 	mkdir -p "$WORK_DIR/build"
-	build_deb_tree "$OPT_SOURCE" "$WORK_DIR/build"
+	build_deb_tree "$WORK_DIR/images" "$WORK_DIR/build"
 
 	fakeroot dpkg-deb --build \
 		-Z${OPT_COMPRESS_TYPE} \
