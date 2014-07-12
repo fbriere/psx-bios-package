@@ -383,7 +383,7 @@ build_deb_tree() {
 	mkdir -p "$DEST/DEBIAN"
 	sed -e "s/\${local:Maintainer}/${OPT_FULLNAME} <${OPT_EMAIL}>/g" \
 		-e "s/\${local:Revision-Append}/${OPT_REVISION_APPEND}/g" \
-		-e "s/\${local:Model}/${MODEL:-"various models"}/g" \
+		-e "s/\${local:Model}/${ONLY_MODEL:-"various models"}/g" \
 		-e "s/\${local:Package-Append}/${OPT_PKGNAME_APPEND}/g" \
 		"$SHARE/control" > "$DEST/DEBIAN/control"
 	sed -i "s/\${local:Installed-Size}/$(du -k -s --apparent-size "$DEST" | cut -f1)/g" "$DEST/DEBIAN/control"
