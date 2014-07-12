@@ -67,7 +67,7 @@ BIOS_SIZE=524288
 
 usage() {
 	cat <<EOF
-Usage: $0 [ <options> ... ] <filename> [...]
+Usage: $0 [ <options> ... ] { <filename> | <url> } [...]
 
 Options:
   --fullname <name>            Full name in Maintainer field  [$OPT_FULLNAME]
@@ -307,6 +307,42 @@ process_file() {
 	fi
 }
 
+process_url() {
+	local WORK_DIR="$1" URL="$2"
+	shift 2
+
+	case "$URL" in
+		*.zip | *.ZIP)
+			if [ ! "$(which unzip)" -a "$OPT_FORCE" != true ]; then
+				echo "Not downloading <$URL>: unzip not available; use --force to override" >&2
+				return 1
+			fi
+			;;
+	esac
+
+	download "$URL" "$WORK_DIR/tmp.bin" \
+		&& process_file "$WORK_DIR" "$WORK_DIR/tmp.bin"
+}
+
+process() {
+	local WORK_DIR="$1" ARG="$2"
+
+	case "$ARG" in
+		http://* | ftp://*)
+			process_url "$WORK_DIR" "$ARG"
+			;;
+		*)
+			if [ ! -f "$ARG" ]; then
+				echo "$0: $ARG: No such file" >&2
+				return 1
+			fi
+			process_file "$WORK_DIR" "$ARG"
+			;;
+	esac
+}
+
+
+
 # Build the filesystem tree for our binary package from an unpacked archive.
 build_deb_tree() {
 	local SRC="$1" DEST="$2"
@@ -380,7 +416,7 @@ main() {
 	local LAST_MODEL
 	mkdir -p "$WORK_DIR/images"
 	for SOURCE in $OPT_SOURCES; do
-		if ! process_file "$WORK_DIR" "$SOURCE"; then
+		if ! process "$WORK_DIR" "$SOURCE"; then
 			echo "Cannot process $SOURCE" >&2
 			exit 1
 		fi
