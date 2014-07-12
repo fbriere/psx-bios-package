@@ -67,7 +67,7 @@ BIOS_SIZE=524288
 
 usage() {
 	cat <<EOF
-Usage: $0 [ <options> ... ] { [ --model ] <filename> | <url> } [...]
+Usage: $0 [ <options> ... ] [ --model ] { <filename> | <url> } [...]
 
 Options:
   --fullname <name>            Full name in Maintainer field  [$OPT_FULLNAME]
