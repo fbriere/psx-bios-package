@@ -34,11 +34,7 @@ MODELS="
 	cba733ceeff5aef5c32254f1d617fa62   2.1  J  1995-07-17   SCPH-3500
 	da27e8b6dab242d8f91a9b25d80c63b8   2.1  A  1995-07-17              DTL-H1101
 	417b34706319da7cf001e76e40136c23   2.1  E  1995-07-17   SCPH-1002  DTL-H1102
-
-
-	# FIXME: eb201d2d98251a598af467d4347bb62f (?)
 	57a06303dfa9cf9351222dfcbb4a29d9   2.2  J  1995-12-04   SCPH-5000  DTL-H1200  DTL-H3000
-
 	924e392ed05558ffdb115408c263dccf   2.2  A  1995-12-04   SCPH-1001  DTL-H1201  DTL-H3001
 	e2110b8a2b97a8e0b857a45d32f7e187   2.2  E  1995-12-04   SCPH-1002  DTL-H1202  DTL-H3002
 	ca5cfc321f916756e3f0effbfaeba13b   2.2  D  1996-03-06              DTL-H1100
@@ -54,12 +50,20 @@ MODELS="
 	b10f5e0e3d9eb60e5159690680b1e774   4.4  E  2000-03-24   SCPH-102
 	6e3735ff4c7dc899ee98981385f6f3d0   4.5  A  2000-05-25   SCPH-101
 	de93caec13d1a141a40a79f5c86168d6   4.5  E  2000-05-25   SCPH-102
+	#            ?                      ?   ?       ?       SCPH-103
 
+	#            ?                      ?   A       ?       SCPH-5001
+	#            ?                      ?   E       ?       SCPH-5002
+	#            ?                      ?   J       ?       SCPH-5003
+	#            ?                      ?   J       ?       SCPH-5903
+
+	# http://www.psxdev.net/forum/viewtopic.php?f=54&t=570
+	2118230527a9f51bd9216e32fa912842    ?   ?  1994-07-27(?)  DTL-H2000
+	#            ?                      ?   ?       ?       DTL-H2500
+	#            ?                      ?   ?       ?       DTL-H2700
+
+	# eb201d2d98251a598af467d4347bb62f is a corrupt version of SCPH-5000
 	# e56ec1b027e2fe8a49217d9678f7f6bb is a corrupt version of SCPH-5502
-	# see: http://www.psxdev.net/forum/viewtopic.php?f=69&t=56&sid=9318604f0084038b70467a13778915ac&start=20#p4568
-
-	# Sony PlayStation 1 BIOS found in the PlayStation 2.
-	# d8f485717a5237285e4d7c5f881b7f32
 "
 
 BIOS_SIZE=524288
