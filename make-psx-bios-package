@@ -25,7 +25,7 @@ VERSION=6
 # http://en.wikipedia.org/wiki/PlayStation_models
 #
 # TODO: Handle models with multiple versions (SCPH-1002 & SCPH-102)
-MODELS="
+KNOWN_MODELS="
 	# PlayStation
 	239665b1a3dade1b5a52c06338011044   1.0  J  1994-09-22   SCPH-1000  DTL-H1000
 	849515939161e62f6b866f6853006780   1.1  J  1995-01-22   SCPH-3000  DTL-H1000H
@@ -224,7 +224,7 @@ sanitize_name() {
 
 # Check the MD5 of a file against known values
 get_model() {
-	echo "$MODELS" |\
+	echo "$KNOWN_MODELS" |\
 		sed 's/^\s\+//' |\
 		sed 's/\s\+/ /g' |\
 		egrep -v '^(#|$)' |\
