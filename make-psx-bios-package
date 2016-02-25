@@ -366,8 +366,8 @@ build_deb_tree() {
 	# We'll refer to this directory a lot
 	local DOC="$DEST/usr/share/doc/${PKGNAME}"
 
-	mkdir -p "$DEST/usr/share/games/psx-bios"
-	cp "$SRC"/* "$DEST/usr/share/games/psx-bios/"
+	mkdir -p "$DEST/usr/share/psemu/bios"
+	cp "$SRC"/* "$DEST/usr/share/psemu/bios/"
 
 	# Documentation (under /usr/share/doc/psx-bios[-append])
 	mkdir -p "$DOC"
