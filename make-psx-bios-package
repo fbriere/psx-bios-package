@@ -265,7 +265,7 @@ misc_dir() {
 
 process_file() {
 	local WORK_DIR="$1" FILENAME="$2" MODEL="$3" RECURSIVE="$4"
-	shift 2
+	shift 3  # 4th argument is optional
 
 	if [ ! "$RECURSIVE" ] && mkdir -p "$WORK_DIR/tmp" \
 		&& extract "$FILENAME" "$WORK_DIR/tmp"
@@ -314,7 +314,7 @@ process_file() {
 
 process_url() {
 	local WORK_DIR="$1" URL="$2" MODEL="$3"
-	shift 2
+	shift 3
 
 	case "$URL" in
 		*.zip | *.ZIP)
@@ -331,6 +331,7 @@ process_url() {
 
 process() {
 	local WORK_DIR="$1" ARG="$2" MODEL="$3"
+	shift 3
 
 	case "$ARG" in
 		http://* | ftp://*)
@@ -371,7 +372,6 @@ build_deb_tree() {
 
 	# Documentation (under /usr/share/doc/psx-bios[-append])
 	mkdir -p "$DOC"
-	# Same with copyright, and prepend our own header
 	cp "$SHARE/copyright" "$DOC/"
 	if [ -e "$SHARE/../debian/changelog" ]; then
 		gzip -9 -c --no-name "$SHARE/../debian/changelog" > "$DOC/changelog.Debian.gz"
