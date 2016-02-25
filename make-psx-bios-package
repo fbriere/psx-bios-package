@@ -76,7 +76,7 @@ Usage: $0 [ <options> ... ] [ --model ] { <filename> | <url> } [...]
 Options:
   --fullname <name>            Full name in Maintainer field  [$OPT_FULLNAME]
   --email <email>              Email address in Maintainer field  [$OPT_EMAIL]
-  --package-append <string>    Append to the package name  [<none> or <model>]
+  --package-append <string>    Append to the package name  [<model> or "-multi"]
   --revision-append <string>   Append to the revision number  [$OPT_REVISION_APPEND]
   --compress-type <type>       Compression type of resulting package  [$OPT_COMPRESS_TYPE]
   --compress-level <level>     Compression level of resulting package  [${OPT_COMPRESS_LEVEL:-<default>}]
@@ -359,8 +359,15 @@ build_deb_tree() {
 		ONLY_MODEL="$LAST_MODEL"
 	fi
 
-	# This also assigns to $OPT_PKGNAME_APPEND
-	local PKGNAME="psx-bios${OPT_PKGNAME_APPEND=${ONLY_MODEL:+"-$(sanitize_name "$ONLY_MODEL")"}}"
+	if [ -z "$OPT_PKGNAME_APPEND" ]; then
+		if [ "$ONLY_MODEL" ]; then
+			OPT_PKGNAME_APPEND="-$(sanitize_name "$ONLY_MODEL")"
+		else
+			OPT_PKGNAME_APPEND="-multi"
+		fi
+	fi
+
+	local PKGNAME="psx-bios${OPT_PKGNAME_APPEND}"
 
 	# Some additional files that we'll need
 	local SHARE="$(misc_dir)"
