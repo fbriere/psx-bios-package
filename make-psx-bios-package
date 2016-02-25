@@ -385,17 +385,30 @@ build_deb_tree() {
 
 	# DEBIAN directory
 	mkdir -p "$DEST/DEBIAN"
-	sed -e "s/\${local:Maintainer}/${OPT_FULLNAME} <${OPT_EMAIL}>/g" \
-		-e "s/\${local:Revision-Append}/${OPT_REVISION_APPEND}/g" \
-		-e "s/\${local:Model}/${ONLY_MODEL:-"various models"}/g" \
-		-e "s/\${local:Package-Append}/${OPT_PKGNAME_APPEND}/g" \
-		"$SHARE/control" > "$DEST/DEBIAN/control"
-	sed -i "s/\${local:Installed-Size}/$(du -k -s --apparent-size "$DEST" | cut -f1)/g" "$DEST/DEBIAN/control"
+
+	# debian/control substitution variables
+	local -A CONTROL_VARS=(
+		['local:Maintainer']="${OPT_FULLNAME} <${OPT_EMAIL}>"
+		['local:Package-Append']="${OPT_PKGNAME_APPEND}"
+		['local:Revision-Append']="${OPT_REVISION_APPEND}"
+		['local:Model']="${ONLY_MODEL:-"various models"}"
+		['local:Installed-Size']="$(du -k -s --apparent-size "$DEST" | cut -f1)"
+	)
+
 	if [ -e "$SHARE/../debian/changelog" ]; then
 		# This is very hackish, but we cannot rely on
 		# dpkg-parsechangelog to be available  :(
-		sed -i "s/\${local:Revision}/$(sed -n '1 s/.*(\(.*\)).*/\1/p' "$SHARE/../debian/changelog")/g" "$DEST/DEBIAN/control"
+		CONTROL_VARS['local:Revision']="$(sed -n '1 s/.*(\(.*\)).*/\1/p' "$SHARE/../debian/changelog")"
 	fi
+
+	# debian/control itself
+	local CONTROL
+	CONTROL=$(< "$SHARE/control")
+	for VARNAME in "${!CONTROL_VARS[@]}"; do
+		CONTROL="${CONTROL//"\${$VARNAME}"/"${CONTROL_VARS["$VARNAME"]}"}"
+	done
+	cat <<<"$CONTROL" > "$DEST/DEBIAN/control"
+
 	# Generate md5sums (which must be relative to $DEST)
 	(cd "$DEST" && find . -type f \! -regex './\(DEBIAN\|etc\)/.*' -printf '%P\0' \
 		| LC_ALL=C sort --zero-terminated \
