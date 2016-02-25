@@ -398,10 +398,11 @@ build_deb_tree() {
 		['local:Maintainer']="${OPT_FULLNAME} <${OPT_EMAIL}>"
 		['local:Package-Append']="${OPT_PKGNAME_APPEND}"
 		['local:Revision-Append']="${OPT_REVISION_APPEND}"
-		['local:Model']="${ONLY_MODEL:-"various models"}"
 		['local:Installed-Size']="$(du -k -s --apparent-size "$DEST" | cut -f1)"
 	)
-
+	if [ "$ONLY_MODEL" ]; then
+		CONTROL_VARS['local:Model']="${ONLY_MODEL}"
+	fi
 	if [ -e "$SHARE/../debian/changelog" ]; then
 		# This is very hackish, but we cannot rely on
 		# dpkg-parsechangelog to be available  :(
@@ -410,7 +411,11 @@ build_deb_tree() {
 
 	# debian/control itself
 	local CONTROL
-	CONTROL=$(< "$SHARE/control")
+	if [ "$ONLY_MODEL" ]; then
+		CONTROL=$(< "$SHARE/control")
+	else
+		CONTROL=$(< "$SHARE/control.multi")
+	fi
 	for VARNAME in "${!CONTROL_VARS[@]}"; do
 		CONTROL="${CONTROL//"\${$VARNAME}"/"${CONTROL_VARS["$VARNAME"]}"}"
 	done
