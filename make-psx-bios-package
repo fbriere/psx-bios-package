@@ -110,10 +110,12 @@ EOF
 }
 
 list_models() {
+	local ROM_LINE VERSION LETTER DATE MODELS
+
 	for ROM_LINE in "${KNOWN_ROMS[@]}"; do
-		read VER REG RELDATE MODELS <<< "$ROM_LINE"
+		read VERSION LETTER DATE MODELS <<< "$ROM_LINE"
 		for MODEL in $MODELS; do
-			echo -e "$MODEL\tv$VER ($REG) $RELDATE"
+			echo -e "$MODEL\tv$VERSION $LETTER  \t$DATE"
 		done
 	done | sort
 }
