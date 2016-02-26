@@ -263,6 +263,7 @@ misc_dir() {
 	fi
 }
 
+# Process a file, either a ROM image or an archive
 process_file() {
 	local WORK_DIR="$1" FILENAME="$2" MODEL="$3" RECURSIVE="$4"
 	shift 3  # 4th argument is optional
@@ -312,6 +313,7 @@ process_file() {
 	fi
 }
 
+# Download and process a URL
 process_url() {
 	local WORK_DIR="$1" URL="$2" MODEL="$3"
 	shift 3
@@ -329,6 +331,7 @@ process_url() {
 		&& process_file "$WORK_DIR" "$WORK_DIR/tmp.bin" "$MODEL"
 }
 
+# Process either a file or URL
 process() {
 	local WORK_DIR="$1" ARG="$2" MODEL="$3"
 	shift 3
