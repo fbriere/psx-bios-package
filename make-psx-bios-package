@@ -21,13 +21,17 @@ set -e
 
 VERSION=6
 
-# https://github.com/petrockblog/RetroPie-Setup/wiki/PCSX-Core-Playstation-1
-# http://en.wikipedia.org/wiki/PlayStation_models
+# List of all known ROM images.  The version information comes from a string
+# within the ROM itself (e.g. "System ROM Version 4.1 12/16/97 A"); the letter
+# does not necessarily match the actual region where the models were released.
+#
+# Note that some models have included more than one ROM version over their
+# lifetime.
 #
 # TODO: Handle models with multiple versions (SCPH-1002 & SCPH-102)
-declare -A KNOWN_MODELS=(
-	#        MD5 Hash                     Ver reg  Rel. Date               Models
-	# --------------------------------    ---  -  ----------   -----------------------------------------------------------------
+declare -A KNOWN_ROMS=(
+	#           MD5 Hash                       Version                      Models
+	# --------------------------------    ------------------   -----------------------------------------------------------------
 
 	# PlayStation
 	['239665b1a3dade1b5a52c06338011044']="1.0  J  1994-09-22   SCPH-1000  DTL-H1000"
@@ -95,8 +99,8 @@ EOF
 }
 
 list_models() {
-	for MODEL_LINE in "${KNOWN_MODELS[@]}"; do
-		read VER REG RELDATE MODELS <<< "$MODEL_LINE"
+	for ROM_LINE in "${KNOWN_ROMS[@]}"; do
+		read VER REG RELDATE MODELS <<< "$ROM_LINE"
 		for MODEL in $MODELS; do
 			echo -e "$MODEL\tv$VER ($REG) $RELDATE"
 		done
@@ -242,7 +246,7 @@ sanitize_name() {
 
 # Check the MD5 of a file against known values
 get_model() {
-	echo "${KNOWN_MODELS[$(md5sum "$1" | cut -d ' ' -f 1)]}" |\
+	echo "${KNOWN_ROMS[$(md5sum "$1" | cut -d ' ' -f 1)]}" |\
 		sed 's/^\s\+//' |\
 		sed 's/\s\+/ /g' |\
 		cut -d ' ' -f 4
