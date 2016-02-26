@@ -269,6 +269,7 @@ process_single_file() {
 	shift 3
 
 	local REAL_MODEL="$(get_model "$FILENAME")"
+	# FIXME: What should happen if MODEL != REAL_MODEL?
 	if [ ! "$REAL_MODEL" ]; then
 		echo "Cannot determine model for $FILENAME" >&2
 		if [ "$OPT_FORCE" = true -a "$MODEL" ]; then
@@ -277,9 +278,7 @@ process_single_file() {
 			return 1
 		fi
 	fi
-	if [ ! "$MODEL" ]; then
-		MODEL="$REAL_MODEL"
-	fi
+	MODEL="${MODEL:-$REAL_MODEL}"
 	LAST_MODEL="$MODEL"
 
 	cp "$FILENAME" "$WORK_DIR/images/$(sanitize_name "$MODEL").bin"
