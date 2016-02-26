@@ -74,6 +74,9 @@ OPTIONS
 	This option is applied to the next 'file', 'directory' or 'URL', and
 	cannot be used with archive files.
 
+*--list-version*::
+	List all known BIOS versions.
+
 *--list-models*::
 	List all known models.
 

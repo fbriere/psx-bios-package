@@ -100,6 +100,8 @@ Options:
   --compress-level <level>     Compression level of resulting package  [${OPT_COMPRESS_LEVEL:-<default>}]
 
   --model <model>              PlayStation model name  [<none>]
+
+  --list-versions              List all known BIOS versions
   --list-models                List all known models
 
   --force                      Override safety checks
@@ -107,6 +109,15 @@ Options:
   --help                       Show this help message
   --version                    Show the version.
 EOF
+}
+
+list_versions() {
+	local ROM_LINE VERSION LETTER DATE MODELS
+
+	for ROM_LINE in "${KNOWN_ROMS[@]}"; do
+		read VERSION LETTER DATE MODELS <<< "$ROM_LINE"
+		echo -e "$VERSION $LETTER   \t$DATE\t$MODELS"
+	done | sort
 }
 
 list_models() {
@@ -181,6 +192,10 @@ parse_args() {
 			--model)
 				OPT_MODEL="$1"
 				shift
+				;;
+			--list-versions)
+				list_versions
+				exit 0
 				;;
 			--list-models)
 				list_models
