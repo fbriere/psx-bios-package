@@ -32,51 +32,51 @@ VERSION=6
 #
 # TODO: Handle models with multiple versions (SCPH-1002 & SCPH-102)
 declare -A KNOWN_ROMS=(
-	#           MD5 Hash                       Version                      Models
-	# --------------------------------    ------------------   -----------------------------------------------------------------
+	#           MD5 Hash                        Version                     Models
+	# --------------------------------    -------------------   -----------------------------------------------------------------
 
 	# PlayStation  (MISSING: DTL-H1001H SCPH-5001 SCPH-5002)
-	['239665b1a3dade1b5a52c06338011044']="1.0  J  1994-09-22   SCPH-1000  DTL-H1000"
-	['849515939161e62f6b866f6853006780']="1.1  J  1995-01-22   SCPH-3000  DTL-H1000H"
-	['dc2b9bf8da62ec93e868cfd29f0d067d']="2.0  A  1995-05-07              DTL-H1001"
-	['54847e693405ffeb0359c6287434cbef']="2.0  E  1995-05-10   SCPH-1002  DTL-H1002"
-	['cba733ceeff5aef5c32254f1d617fa62']="2.1  J  1995-07-17   SCPH-3500"
-	['da27e8b6dab242d8f91a9b25d80c63b8']="2.1  A  1995-07-17              DTL-H1101"
-	['417b34706319da7cf001e76e40136c23']="2.1  E  1995-07-17   SCPH-1002  DTL-H1102"
-	['57a06303dfa9cf9351222dfcbb4a29d9']="2.2  J  1995-12-04   SCPH-5000  DTL-H1200  DTL-H3000"
+	['239665b1a3dade1b5a52c06338011044']="1.0  J   1994-09-22   SCPH-1000  DTL-H1000"
+	['849515939161e62f6b866f6853006780']="1.1  J   1995-01-22   SCPH-3000  DTL-H1000H"
+	['dc2b9bf8da62ec93e868cfd29f0d067d']="2.0  A   1995-05-07              DTL-H1001"
+	['54847e693405ffeb0359c6287434cbef']="2.0  E   1995-05-10   SCPH-1002  DTL-H1002"
+	['cba733ceeff5aef5c32254f1d617fa62']="2.1  J   1995-07-17   SCPH-3500"
+	['da27e8b6dab242d8f91a9b25d80c63b8']="2.1  A   1995-07-17              DTL-H1101"
+	['417b34706319da7cf001e76e40136c23']="2.1  E   1995-07-17   SCPH-1002  DTL-H1102"
+	['57a06303dfa9cf9351222dfcbb4a29d9']="2.2  J   1995-12-04   SCPH-5000  DTL-H1200  DTL-H3000"
 	# PlayStation Video CD (SCPH-5903)
 	#   This image is basically a slightly modified 2.2/J (five bytes were
 	#   changed), with another 512 KiB appended, making it 1 MiB in size.
 	#   FIXME: This file will not be picked as it does not match $BIOS_SIZE
-	['81328b966e6dcf7ea1e32e55e1c104bb']="2.2 J(v) 1995-12-04  SCPH-5903"
-	['924e392ed05558ffdb115408c263dccf']="2.2  A  1995-12-04   SCPH-1001  SCPH-5003  DTL-H1201  DTL-H3001"
-	['e2110b8a2b97a8e0b857a45d32f7e187']="2.2  E  1995-12-04   SCPH-1002  DTL-H1202  DTL-H3002"
-	['ca5cfc321f916756e3f0effbfaeba13b']="2.2  D  1996-03-06              DTL-H1100"
-	['8dd7d5296a650fac7319bce665a6a53c']="3.0  J  1996-09-09   SCPH-5500"
-	['490f666e1afb15b7362b406ed1cea246']="3.0  A  1996-11-18   SCPH-5501  SCPH-5503  SCPH-7003"
-	['32736f17079d0b2b7024407c39bd3050']="3.0  E  1997-01-06   SCPH-5502  SCPH-5552"
-	['8e4c14f567745eff2f0408c8129f72a6']="4.0  J  1997-08-18   SCPH-7000  SCPH-7500  SCPH-9000"
+	['81328b966e6dcf7ea1e32e55e1c104bb']="2.2 J(v) 1995-12-04   SCPH-5903"
+	['924e392ed05558ffdb115408c263dccf']="2.2  A   1995-12-04   SCPH-1001  SCPH-5003  DTL-H1201  DTL-H3001"
+	['e2110b8a2b97a8e0b857a45d32f7e187']="2.2  E   1995-12-04   SCPH-1002  DTL-H1202  DTL-H3002"
+	['ca5cfc321f916756e3f0effbfaeba13b']="2.2  D   1996-03-06              DTL-H1100"
+	['8dd7d5296a650fac7319bce665a6a53c']="3.0  J   1996-09-09   SCPH-5500"
+	['490f666e1afb15b7362b406ed1cea246']="3.0  A   1996-11-18   SCPH-5501  SCPH-5503  SCPH-7003"
+	['32736f17079d0b2b7024407c39bd3050']="3.0  E   1997-01-06   SCPH-5502  SCPH-5552"
+	['8e4c14f567745eff2f0408c8129f72a6']="4.0  J   1997-08-18   SCPH-7000  SCPH-7500  SCPH-9000"
 	# [?] Wikpedia lists the SCPH-7500 as 4.1 (1997-12-16)
-	['1e68c231d0896b7eadcad1d7d8e76129']="4.1  A  1997-12-16   SCPH-7001  SCPH-7501  SCPH-7503  SCPH-9001  SCPH-9003  SCPH-9903"
+	['1e68c231d0896b7eadcad1d7d8e76129']="4.1  A   1997-12-16   SCPH-7001  SCPH-7501  SCPH-7503  SCPH-9001  SCPH-9003  SCPH-9903"
 	# 'Midnight Blue' PlayStation (SCPH-7000W)
 	#   This image is identified as 4.1/A, but differs from the other
 	#   4.1/A models; it is also the only Japanese model (xxx0) to bear
 	#   an "A" version, and is apparently not region-locked.
-	['b84be139db3ee6cbd075630aa20a6553']="4.1 A(w) 1997-11-14  SCPH-7000W"
-	['b9d9a0286c33dc6b7237bb13cd46fdee']="4.1  E  1997-12-16   SCPH-7002  SCPH-7502  SCPH-9002"
+	['b84be139db3ee6cbd075630aa20a6553']="4.1 A(w) 1997-11-14   SCPH-7000W"
+	['b9d9a0286c33dc6b7237bb13cd46fdee']="4.1  E   1997-12-16   SCPH-7002  SCPH-7502  SCPH-9002"
 	# [?] Wikipedia lists the SCPH-9003 as 4.2
 
 	# PSone  (MISSING: SCPH-103)
-	['8abc1b549a4a80954addc48ef02c4521']="4.3  J  2000-03-11   SCPH-100"
-	['b10f5e0e3d9eb60e5159690680b1e774']="4.4  E  2000-03-24   SCPH-102"
-	['6e3735ff4c7dc899ee98981385f6f3d0']="4.5  A  2000-05-25   SCPH-101"
-	['de93caec13d1a141a40a79f5c86168d6']="4.5  E  2000-05-25   SCPH-102"
+	['8abc1b549a4a80954addc48ef02c4521']="4.3  J   2000-03-11   SCPH-100"
+	['b10f5e0e3d9eb60e5159690680b1e774']="4.4  E   2000-03-24   SCPH-102"
+	['6e3735ff4c7dc899ee98981385f6f3d0']="4.5  A   2000-05-25   SCPH-101"
+	['de93caec13d1a141a40a79f5c86168d6']="4.5  E   2000-05-25   SCPH-102"
 	# [?] Wikipedia lists the SCPH-103 as 4.6
 
 
 	# PCI cards  (MISSING: DTL-H2500 DTL-H2700)
 	# See http://www.psxdev.net/forum/viewtopic.php?f=54&t=570
-	['2118230527a9f51bd9216e32fa912842']=" ?   ? 1994-07-27(?) DTL-H2000"
+	['2118230527a9f51bd9216e32fa912842']=" ?   ?   1994-07-27(?) DTL-H2000"
 
 	# Net Yaroze  (MISSING: DTL-3000)
 
