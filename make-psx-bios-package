@@ -28,6 +28,8 @@ VERSION=6
 # Note that some models have included more than one ROM version over their
 # lifetime.
 #
+# See http://redump.org/datfile/psx-bios/ for more information.
+#
 # TODO: Handle models with multiple versions (SCPH-1002 & SCPH-102)
 declare -A KNOWN_ROMS=(
 	#           MD5 Hash                       Version                      Models
