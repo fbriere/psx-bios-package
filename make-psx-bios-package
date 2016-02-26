@@ -73,10 +73,10 @@ declare -A KNOWN_ROMS=(
 	['de93caec13d1a141a40a79f5c86168d6']="4.5  E   2000-05-25   SCPH-102"
 	# [?] Wikipedia lists the SCPH-103 as 4.6
 
-
-	# PCI cards  (MISSING: DTL-H2500 DTL-H2700)
-	# See http://www.psxdev.net/forum/viewtopic.php?f=54&t=570
-	['2118230527a9f51bd9216e32fa912842']=" ?   ?   1994-07-27(?) DTL-H2000"
+	# PCI cards  (MISSING: DTL-H2000 DTL-H2500 DTL-H2700)
+	#
+	# Copied from http://www.psxdev.net/forum/viewtopic.php?f=54&t=570
+	#['2118230527a9f51bd9216e32fa912842']=" ?   ?   1994-07-27(?) DTL-H2000"
 
 	# Net Yaroze  (MISSING: DTL-3000)
 
