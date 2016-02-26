@@ -408,9 +408,11 @@ build_deb_tree() {
 	if [ "$ONLY_MODEL" ]; then
 		CONTROL_VARS['local:Model']="${ONLY_MODEL}"
 	else
-		# TODO: Insert model list in description
-		# TODO: Provides: other single-model packages
-		:
+		local CTRL_PROVIDES
+		for MODEL in "${MODELS[@]}"; do
+			CTRL_PROVIDES="${CTRL_PROVIDES:+"${CTRL_PROVIDES}, "}psx-bios-$(sanitize_name "$MODEL")"
+		done
+		CONTROL_VARS['local:Provides']="$CTRL_PROVIDES"
 	fi
 	if [ -e "$SHARE/../debian/changelog" ]; then
 		# This is very hackish, but we cannot rely on
@@ -419,16 +421,24 @@ build_deb_tree() {
 	fi
 
 	# debian/control itself
-	local CONTROL
+	local CONTROL_FILE
 	if [ "$ONLY_MODEL" ]; then
-		CONTROL=$(< "$SHARE/control")
+		CONTROL_FILE="$SHARE/control"
 	else
-		CONTROL=$(< "$SHARE/control.multi")
+		CONTROL_FILE="$SHARE/control.multi"
 	fi
-	for VARNAME in "${!CONTROL_VARS[@]}"; do
-		CONTROL="${CONTROL//"\${$VARNAME}"/"${CONTROL_VARS["$VARNAME"]}"}"
-	done
-	cat <<<"$CONTROL" > "$DEST/DEBIAN/control"
+	while IFS="" read CONTROL_LINE; do
+		for VARNAME in "${!CONTROL_VARS[@]}"; do
+			CONTROL_LINE="${CONTROL_LINE//"\${$VARNAME}"/"${CONTROL_VARS["$VARNAME"]}"}"
+		done
+		if [[ "$CONTROL_LINE" == *'${local:Model-List}'* ]]; then
+			for MODEL in "${MODELS[@]}"; do
+				echo "${CONTROL_LINE/'${local:Model-List}'/$MODEL}"
+			done | sort
+		else
+			echo "$CONTROL_LINE"
+		fi
+	done < "$CONTROL_FILE" > "$DEST/DEBIAN/control"
 
 	# Generate md5sums (which must be relative to $DEST)
 	(cd "$DEST" && find . -type f \! -regex './\(DEBIAN\|etc\)/.*' -printf '%P\0' \
