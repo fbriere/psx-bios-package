@@ -276,16 +276,12 @@ process_file() {
 			echo "--model cannot be used with an archive file" >&2
 			exit 1
 		fi
-		FOUND=
-		find "$WORK_DIR/tmp" -type f -size ${BIOS_SIZE}c | {
-			# Keep in mind that the pipe created a subshell
-			FOUND=
-			while read FILENAME; do
-				process_file "$WORK_DIR" "$FILENAME" "$MODEL" "recursive" \
-					&& FOUND=true
-			done
-			[ "$FOUND" = true ]
-		} && FOUND=true
+		local FOUND
+		while read FILENAME; do
+			process_file "$WORK_DIR" "$FILENAME" "$MODEL" "recursive" || exit
+			# Record that we iterated at least once
+			FOUND=true
+		done < <(find "$WORK_DIR/tmp" -type f -size ${BIOS_SIZE}c)
 		if [ ! "$FOUND" ]; then
 			echo "Could not find any images in $FILENAME" >&2
 			exit 1
