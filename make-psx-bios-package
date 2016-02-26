@@ -263,14 +263,39 @@ misc_dir() {
 	fi
 }
 
-# Process a file, either a ROM image or an archive
-process_file() {
+# Process a single file, possibly as part of an archive file.
+process_single_file() {
 	local WORK_DIR="$1" FILENAME="$2" MODEL="$3" RECURSIVE="$4"
 	shift 3  # 4th argument is optional
 
-	if [ ! "$RECURSIVE" ] && mkdir -p "$WORK_DIR/tmp" \
-		&& extract "$FILENAME" "$WORK_DIR/tmp"
-	then
+	local REAL_MODEL="$(get_model "$FILENAME")"
+	if [ ! "$REAL_MODEL" ]; then
+		if [ ! "$RECURSIVE" ]; then
+			echo "Cannot determine model for $FILENAME" >&2
+			if [ "$OPT_FORCE" = true -a "$MODEL" ]; then
+				echo "Overriding as requested by --force" >&2
+			else
+				return 1
+			fi
+		else
+			return 1
+		fi
+	fi
+	if [ ! "$MODEL" ]; then
+		MODEL="$REAL_MODEL"
+	fi
+	LAST_MODEL="$MODEL"
+
+	cp "$FILENAME" "$WORK_DIR/images/$(sanitize_name "$MODEL").bin"
+}
+
+# Process a file, either a ROM image or an archive
+process_file() {
+	local WORK_DIR="$1" FILENAME="$2" MODEL="$3"
+	shift 3
+
+	mkdir -p "$WORK_DIR/tmp"
+	if extract "$FILENAME" "$WORK_DIR/tmp"; then
 		if [ "$MODEL" ]; then
 			# TODO: Maybe allow --model if only one image is found
 			echo "--model cannot be used with an archive file" >&2
@@ -278,7 +303,7 @@ process_file() {
 		fi
 		local FOUND
 		while read FILENAME; do
-			process_file "$WORK_DIR" "$FILENAME" "$MODEL" "recursive" || exit
+			process_single_file "$WORK_DIR" "$FILENAME" "$MODEL" "recursive" || exit
 			# Record that we iterated at least once
 			FOUND=true
 		done < <(find "$WORK_DIR/tmp" -type f -size ${BIOS_SIZE}c)
@@ -286,27 +311,10 @@ process_file() {
 			echo "Could not find any images in $FILENAME" >&2
 			exit 1
 		fi
-		rm -rf "$WORK_DIR/tmp"
 	else
-		local REAL_MODEL="$(get_model "$FILENAME")"
-		if [ ! "$REAL_MODEL" ]; then
-			if [ ! "$RECURSIVE" ]; then
-				echo "Cannot determine model for $FILENAME" >&2
-				if [ "$OPT_FORCE" = true -a "$MODEL" ]; then
-					echo "Overriding as requested by --force" >&2
-				else
-					return 1
-				fi
-			else
-				return 1
-			fi
-		fi
-		if [ ! "$MODEL" ]; then
-			MODEL="$REAL_MODEL"
-		fi
-		LAST_MODEL="$MODEL"
-		cp "$FILENAME" "$WORK_DIR/images/$(sanitize_name "$MODEL").bin"
+		process_single_file "$WORK_DIR" "$FILENAME" "$MODEL" || exit
 	fi
+	rm -rf "$WORK_DIR/tmp"
 }
 
 # Download and process a URL
