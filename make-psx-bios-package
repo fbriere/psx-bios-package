@@ -71,7 +71,7 @@ BIOS_SIZE=524288
 
 usage() {
 	cat <<EOF
-Usage: $0 [ <options> ... ] [ --model ] { <filename> | <url> } [...]
+Usage: $0 [ <options> ... ] [ --model ] { <file> | <directory> | <url> } [...]
 
 Options:
   --fullname <name>            Full name in Maintainer field  [$OPT_FULLNAME]
@@ -282,6 +282,15 @@ process_single_file() {
 	cp "$FILENAME" "$WORK_DIR/images/$(sanitize_name "$MODEL").bin"
 }
 
+# Process a directory, and print the model
+process_single_dir() {
+	local WORK_DIR="$1" DIRNAME="$2" MODEL="$3"
+
+	while read FILENAME; do
+		process_single_file "$WORK_DIR" "$FILENAME" "$MODEL" || exit
+	done < <(find "$DIRNAME" -type f -size ${BIOS_SIZE}c)
+}
+
 # Process a file, either a ROM image or an archive
 process_file() {
 	local WORK_DIR="$1" FILENAME="$2" MODEL="$3"
@@ -295,10 +304,8 @@ process_file() {
 			exit 1
 		fi
 
-		while read FILENAME; do
-			process_single_file "$WORK_DIR" "$FILENAME" "$MODEL" \
+		process_single_dir "$WORK_DIR" "$WORK_DIR/tmp" "$MODEL" \
 				>> "$WORK_DIR/models" || exit
-		done < <(find "$WORK_DIR/tmp" -type f -size ${BIOS_SIZE}c)
 
 		if [ ! -s "$WORK_DIR/models" ]; then
 			echo "Could not find any images in $FILENAME" >&2
@@ -309,6 +316,27 @@ process_file() {
 			>> "$WORK_DIR/models" || exit
 	fi
 	rm -rf "$WORK_DIR/tmp"
+
+	readarray -t MODELS < "$WORK_DIR/models"
+}
+
+# Process a directory
+process_dir() {
+	local WORK_DIR="$1" DIRNAME="$2" MODEL="$3"
+
+	if [ "$MODEL" ]; then
+		# TODO: Maybe allow --model if only one image is found
+		echo "--model cannot be used with a directory" >&2
+		exit 1
+	fi
+
+	process_single_dir "$WORK_DIR" "$DIRNAME" "$MODEL" \
+			>> "$WORK_DIR/models" || exit
+
+	if [ ! -s "$WORK_DIR/models" ]; then
+		echo "Could not find any images in $DIRNAME" >&2
+		exit 1
+	fi
 
 	readarray -t MODELS < "$WORK_DIR/models"
 }
@@ -341,11 +369,14 @@ process() {
 			process_url "$WORK_DIR" "$ARG" "$MODEL"
 			;;
 		*)
-			if [ ! -f "$ARG" ]; then
-				echo "$0: $ARG: No such file" >&2
+			if [ -f "$ARG" ]; then
+				process_file "$WORK_DIR" "$ARG" "$MODEL"
+			elif [ -d "$ARG" ]; then
+				process_dir "$WORK_DIR" "$ARG" "$MODEL"
+			else
+				echo "$0: $ARG: No such file or directory" >&2
 				return 1
 			fi
-			process_file "$WORK_DIR" "$ARG" "$MODEL"
 			;;
 	esac
 }

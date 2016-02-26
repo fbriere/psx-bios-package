@@ -9,15 +9,15 @@ make-psx-bios-package - builds a psx-bios Debian package
 
 SYNOPSIS
 --------
-*make-psx-bios-package* ['options' ...] [*--model* 'model'] {'URL' | 'filename'} [...]
+*make-psx-bios-package* ['options' ...] [*--model* 'model'] { 'file' | 'directory' | 'URL' } [...]
 
 DESCRIPTION
 -----------
 Creates a Debian package from PlayStation BIOS images.
 
-Each argument can either be a local 'filename', or a remote 'URL' which will
-automatically be fetched.  The resulting file can either be a BIOS image,
-or an archive file (*.tar* or *.zip*) containing one or several images.
+Each argument can either be a local 'file' or 'directory', or a remote 'URL'
+which will automatically be fetched.  The resulting file can either be a BIOS
+image, or an archive file (*.tar* or *.zip*) containing one or several images.
 
 Upon success, the resulting *psx-bios* package will be located in the
 current directory.
@@ -71,8 +71,8 @@ OPTIONS
 	own, but since many PlayStation models share the same BIOS, this
 	option can be used to specify an alternative model.
 	+
-	This option is applied to the next 'filename' or 'URL', and cannot
-	be used with archive files.
+	This option is applied to the next 'file', 'directory' or 'URL', and
+	cannot be used with archive files.
 
 *--force*::
 	Override safety checks.
