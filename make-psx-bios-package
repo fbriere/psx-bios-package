@@ -263,7 +263,7 @@ misc_dir() {
 	fi
 }
 
-# Process a single file, possibly as part of an archive file.
+# Process a single file, possibly as part of an archive, and print the model
 process_single_file() {
 	local WORK_DIR="$1" FILENAME="$2" MODEL="$3"
 	shift 3
@@ -279,7 +279,7 @@ process_single_file() {
 		fi
 	fi
 	MODEL="${MODEL:-$REAL_MODEL}"
-	LAST_MODEL="$MODEL"
+	echo "$MODEL"
 
 	cp "$FILENAME" "$WORK_DIR/images/$(sanitize_name "$MODEL").bin"
 }
@@ -296,20 +296,23 @@ process_file() {
 			echo "--model cannot be used with an archive file" >&2
 			exit 1
 		fi
-		local FOUND
+
 		while read FILENAME; do
-			process_single_file "$WORK_DIR" "$FILENAME" "$MODEL" || exit
-			# Record that we iterated at least once
-			FOUND=true
+			process_single_file "$WORK_DIR" "$FILENAME" "$MODEL" \
+				>> "$WORK_DIR/models" || exit
 		done < <(find "$WORK_DIR/tmp" -type f -size ${BIOS_SIZE}c)
-		if [ ! "$FOUND" ]; then
+
+		if [ ! -s "$WORK_DIR/models" ]; then
 			echo "Could not find any images in $FILENAME" >&2
 			exit 1
 		fi
 	else
-		process_single_file "$WORK_DIR" "$FILENAME" "$MODEL" || exit
+		process_single_file "$WORK_DIR" "$FILENAME" "$MODEL" \
+			>> "$WORK_DIR/models" || exit
 	fi
 	rm -rf "$WORK_DIR/tmp"
+
+	readarray -t MODELS < "$WORK_DIR/models"
 }
 
 # Download and process a URL
@@ -357,8 +360,8 @@ build_deb_tree() {
 	shift 2
 
 	local ONLY_MODEL
-	if [ $(ls "$SRC"/* | wc -l) -eq 1 ]; then
-		ONLY_MODEL="$LAST_MODEL"
+	if [ ${#MODELS[@]} -eq 1 ]; then
+		ONLY_MODEL="${MODELS[0]}"
 	fi
 
 	if [ -z "$OPT_PKGNAME_APPEND" ]; then
@@ -404,6 +407,10 @@ build_deb_tree() {
 	)
 	if [ "$ONLY_MODEL" ]; then
 		CONTROL_VARS['local:Model']="${ONLY_MODEL}"
+	else
+		# TODO: Insert model list in description
+		# TODO: Provides: other single-model packages
+		:
 	fi
 	if [ -e "$SHARE/../debian/changelog" ]; then
 		# This is very hackish, but we cannot rely on
@@ -445,7 +452,7 @@ main() {
 	local WORK_DIR="$(mktemp --directory --tmpdir)"
 	trap "rm -rf '$WORK_DIR'" EXIT
 
-	local LAST_MODEL
+	local -a MODELS
 	mkdir -p "$WORK_DIR/images"
 	for SOURCE in "${OPT_SOURCES[@]}"; do
 		if ! process "$WORK_DIR" "$SOURCE" "${OPT_SOURCES_MODEL[0]}"; then
