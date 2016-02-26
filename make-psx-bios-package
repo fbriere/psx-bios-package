@@ -26,6 +26,9 @@ VERSION=6
 #
 # TODO: Handle models with multiple versions (SCPH-1002 & SCPH-102)
 declare -A KNOWN_MODELS=(
+	#        MD5 Hash                     Ver reg  Rel. Date               Models
+	# --------------------------------    ---  -  ----------   -----------------------------------------------------------------
+
 	# PlayStation
 	['239665b1a3dade1b5a52c06338011044']="1.0  J  1994-09-22   SCPH-1000  DTL-H1000"
 	['849515939161e62f6b866f6853006780']="1.1  J  1995-01-22   SCPH-3000  DTL-H1000H"
@@ -82,12 +85,22 @@ Options:
   --compress-level <level>     Compression level of resulting package  [${OPT_COMPRESS_LEVEL:-<default>}]
 
   --model <model>              PlayStation model name  [<none>]
+  --list-models                List all known models
 
   --force                      Override safety checks
 
   --help                       Show this help message
   --version                    Show the version.
 EOF
+}
+
+list_models() {
+	for MODEL_LINE in "${KNOWN_MODELS[@]}"; do
+		read VER REG RELDATE MODELS <<< "$MODEL_LINE"
+		for MODEL in $MODELS; do
+			echo -e "$MODEL\tv$VER ($REG) $RELDATE"
+		done
+	done | sort
 }
 
 # Set default args early on -- they may be displayed in usage()
@@ -152,6 +165,10 @@ parse_args() {
 				OPT_MODEL="$1"
 				shift
 				;;
+			--list-models)
+				list_models
+				exit 0
+				;;
 			--package-append)
 				OPT_PKGNAME_APPEND="$1"
 				shift
@@ -159,6 +176,7 @@ parse_args() {
 			--force)
 				OPT_FORCE=true
 				;;
+
 			--help)
 				usage
 				exit 0
