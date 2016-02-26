@@ -265,18 +265,14 @@ misc_dir() {
 
 # Process a single file, possibly as part of an archive file.
 process_single_file() {
-	local WORK_DIR="$1" FILENAME="$2" MODEL="$3" RECURSIVE="$4"
-	shift 3  # 4th argument is optional
+	local WORK_DIR="$1" FILENAME="$2" MODEL="$3"
+	shift 3
 
 	local REAL_MODEL="$(get_model "$FILENAME")"
 	if [ ! "$REAL_MODEL" ]; then
-		if [ ! "$RECURSIVE" ]; then
-			echo "Cannot determine model for $FILENAME" >&2
-			if [ "$OPT_FORCE" = true -a "$MODEL" ]; then
-				echo "Overriding as requested by --force" >&2
-			else
-				return 1
-			fi
+		echo "Cannot determine model for $FILENAME" >&2
+		if [ "$OPT_FORCE" = true -a "$MODEL" ]; then
+			echo "Overriding as requested by --force" >&2
 		else
 			return 1
 		fi
@@ -303,7 +299,7 @@ process_file() {
 		fi
 		local FOUND
 		while read FILENAME; do
-			process_single_file "$WORK_DIR" "$FILENAME" "$MODEL" "recursive" || exit
+			process_single_file "$WORK_DIR" "$FILENAME" "$MODEL" || exit
 			# Record that we iterated at least once
 			FOUND=true
 		done < <(find "$WORK_DIR/tmp" -type f -size ${BIOS_SIZE}c)
