@@ -9,7 +9,7 @@ make-psx-bios-package - builds a psx-bios Debian package
 
 SYNOPSIS
 --------
-*make-psx-bios-package* ['options' ...] [*--model* 'model'] { 'file' | 'directory' | 'URL' } [...]
+*make-psx-bios-package* ['options' ...] { 'file' | 'directory' | 'URL' } [...]
 
 DESCRIPTION
 -----------
@@ -62,17 +62,11 @@ OPTIONS
 	Specify which compression level to use when building the package.
 	See the *dpkg-deb*(1) manpage for allowed and default values.
 
-*--model* 'model'::
-	PlayStation model name (e.g. SCPH-7001) for the given image.  The
-	model name is used to determine the resulting image filename, as
-	well as for the package name and description (for a single image).
+*--filename* 'filename'::
+	Filename (under */usr/share/psemu/bios*) to be used for the next image.
 	+
-	The packager will normally determine the appropriate model on its
-	own, but since many PlayStation models share the same BIOS, this
-	option can be used to specify an alternative model.
-	+
-	This option is applied to the next 'file', 'directory' or 'URL', and
-	cannot be used with archive files.
+	This option is applied to the next 'file' or 'URL', and cannot be used
+	with archive files or directories.
 
 *--list-version*::
 	List all known BIOS versions.

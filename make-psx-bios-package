@@ -89,7 +89,7 @@ BIOS_SIZE=524288
 
 usage() {
 	cat <<EOF
-Usage: $0 [ <options> ... ] [ --model ] { <file> | <directory> | <url> } [...]
+Usage: $0 [ <options> ... ] { <file> | <directory> | <url> } [...]
 
 Options:
   --fullname <name>            Full name in Maintainer field  [$OPT_FULLNAME]
@@ -99,7 +99,7 @@ Options:
   --compress-type <type>       Compression type of resulting package  [$OPT_COMPRESS_TYPE]
   --compress-level <level>     Compression level of resulting package  [${OPT_COMPRESS_LEVEL:-<default>}]
 
-  --model <model>              PlayStation model name  [<none>]
+  --filename <filename>        Filename to be used for the next BIOS image
 
   --list-versions              List all known BIOS versions
   --list-models                List all known models
@@ -149,7 +149,7 @@ set_default_args() {
 # Process command-line arguments, setting $OPT_* variables
 parse_args() {
 	# Much easier than messing around with eval set --
-	declare -a -g OPT_SOURCES OPT_SOURCES_MODEL
+	declare -a -g OPT_SOURCES OPT_SOURCES_FILENAME
 
 	local ARG
 
@@ -189,8 +189,8 @@ parse_args() {
 				OPT_COMPRESS_LEVEL="$1"
 				shift
 				;;
-			--model)
-				OPT_MODEL="$1"
+			--filename)
+				OPT_FILENAME="$1"
 				shift
 				;;
 			--list-versions)
@@ -224,8 +224,8 @@ parse_args() {
 				;;
 			*)
 				OPT_SOURCES=( "${OPT_SOURCES[@]}" "$ARG" )
-				OPT_SOURCES_MODEL=( "${OPT_SOURCES_MODEL[@]}" "$OPT_MODEL" )
-				unset OPT_MODEL
+				OPT_SOURCES_FILENAME=( "${OPT_SOURCES_FILENAME[@]}" "$OPT_FILENAME" )
+				unset OPT_FILENAME
 				;;
 		esac
 	done
@@ -313,48 +313,42 @@ misc_dir() {
 
 # Process a single file, possibly as part of an archive, and print the model
 process_single_file() {
-	local WORK_DIR="$1" FILENAME="$2" MODEL="$3"
+	local WORK_DIR="$1" FILENAME="$2" DEST="$3"
 	shift 3
 
-	local REAL_MODEL="$(get_model "$FILENAME")"
-	# FIXME: What should happen if MODEL != REAL_MODEL?
-	if [ ! "$REAL_MODEL" ]; then
+	local MODEL="$(get_model "$FILENAME")"
+	if [ ! "$MODEL" ]; then
 		echo "Cannot determine model for $FILENAME" >&2
-		if [ "$OPT_FORCE" = true -a "$MODEL" ]; then
-			echo "Overriding as requested by --force" >&2
-		else
-			return 1
-		fi
+		return 1
 	fi
-	MODEL="${MODEL:-$REAL_MODEL}"
 	echo "$MODEL"
 
-	cp "$FILENAME" "$WORK_DIR/images/$(sanitize_name "$MODEL").bin"
+	cp "$FILENAME" "$WORK_DIR/images/${DEST:-$(sanitize_name "$MODEL").bin}"
 }
 
 # Process a directory, and print the model
 process_single_dir() {
-	local WORK_DIR="$1" DIRNAME="$2" MODEL="$3"
+	local WORK_DIR="$1" DIRNAME="$2" DEST="$3"
 
 	while read FILENAME; do
-		process_single_file "$WORK_DIR" "$FILENAME" "$MODEL" || exit
+		process_single_file "$WORK_DIR" "$FILENAME" "$DEST" || exit
 	done < <(find "$DIRNAME" -type f -size ${BIOS_SIZE}c)
 }
 
 # Process a file, either a ROM image or an archive
 process_file() {
-	local WORK_DIR="$1" FILENAME="$2" MODEL="$3"
+	local WORK_DIR="$1" FILENAME="$2" DEST="$3"
 	shift 3
 
 	mkdir -p "$WORK_DIR/tmp"
 	if extract "$FILENAME" "$WORK_DIR/tmp"; then
-		if [ "$MODEL" ]; then
-			# TODO: Maybe allow --model if only one image is found
-			echo "--model cannot be used with an archive file" >&2
+		if [ "$DEST" ]; then
+			# TODO: Maybe allow --filename if only one image is found
+			echo "--filename cannot be used with an archive file" >&2
 			exit 1
 		fi
 
-		process_single_dir "$WORK_DIR" "$WORK_DIR/tmp" "$MODEL" \
+		process_single_dir "$WORK_DIR" "$WORK_DIR/tmp" "$DEST" \
 				>> "$WORK_DIR/models" || exit
 
 		if [ ! -s "$WORK_DIR/models" ]; then
@@ -362,7 +356,7 @@ process_file() {
 			exit 1
 		fi
 	else
-		process_single_file "$WORK_DIR" "$FILENAME" "$MODEL" \
+		process_single_file "$WORK_DIR" "$FILENAME" "$DEST" \
 			>> "$WORK_DIR/models" || exit
 	fi
 	rm -rf "$WORK_DIR/tmp"
@@ -372,15 +366,15 @@ process_file() {
 
 # Process a directory
 process_dir() {
-	local WORK_DIR="$1" DIRNAME="$2" MODEL="$3"
+	local WORK_DIR="$1" DIRNAME="$2" DEST="$3"
 
-	if [ "$MODEL" ]; then
-		# TODO: Maybe allow --model if only one image is found
-		echo "--model cannot be used with a directory" >&2
+	if [ "$DEST" ]; then
+		# TODO: Maybe allow --filename if only one image is found
+		echo "--filename cannot be used with a directory" >&2
 		exit 1
 	fi
 
-	process_single_dir "$WORK_DIR" "$DIRNAME" "$MODEL" \
+	process_single_dir "$WORK_DIR" "$DIRNAME" "$DEST" \
 			>> "$WORK_DIR/models" || exit
 
 	if [ ! -s "$WORK_DIR/models" ]; then
@@ -393,7 +387,7 @@ process_dir() {
 
 # Download and process a URL
 process_url() {
-	local WORK_DIR="$1" URL="$2" MODEL="$3"
+	local WORK_DIR="$1" URL="$2" DEST="$3"
 	shift 3
 
 	case "$URL" in
@@ -406,23 +400,23 @@ process_url() {
 	esac
 
 	download "$URL" "$WORK_DIR/tmp.bin" \
-		&& process_file "$WORK_DIR" "$WORK_DIR/tmp.bin" "$MODEL"
+		&& process_file "$WORK_DIR" "$WORK_DIR/tmp.bin" "$DEST"
 }
 
 # Process either a file or URL
 process() {
-	local WORK_DIR="$1" ARG="$2" MODEL="$3"
+	local WORK_DIR="$1" ARG="$2" DEST="$3"
 	shift 3
 
 	case "$ARG" in
 		http://* | ftp://*)
-			process_url "$WORK_DIR" "$ARG" "$MODEL"
+			process_url "$WORK_DIR" "$ARG" "$DEST"
 			;;
 		*)
 			if [ -f "$ARG" ]; then
-				process_file "$WORK_DIR" "$ARG" "$MODEL"
+				process_file "$WORK_DIR" "$ARG" "$DEST"
 			elif [ -d "$ARG" ]; then
-				process_dir "$WORK_DIR" "$ARG" "$MODEL"
+				process_dir "$WORK_DIR" "$ARG" "$DEST"
 			else
 				echo "$0: $ARG: No such file or directory" >&2
 				return 1
@@ -550,12 +544,12 @@ main() {
 	local -a MODELS
 	mkdir -p "$WORK_DIR/images"
 	for SOURCE in "${OPT_SOURCES[@]}"; do
-		if ! process "$WORK_DIR" "$SOURCE" "${OPT_SOURCES_MODEL[0]}"; then
+		if ! process "$WORK_DIR" "$SOURCE" "${OPT_SOURCES_FILENAME[0]}"; then
 			echo "Cannot process $SOURCE" >&2
 			exit 1
 		fi
-		unset OPT_SOURCES_MODEL[0]
-		OPT_SOURCES_MODEL=( "${OPT_SOURCES_MODEL[@]}" )
+		unset OPT_SOURCES_FILENAME[0]
+		OPT_SOURCES_FILENAME=( "${OPT_SOURCES_FILENAME[@]}" )
 	done
 
 	if ! ls "$WORK_DIR/images/" >/dev/null 2>&1; then
