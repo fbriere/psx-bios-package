@@ -432,6 +432,45 @@ process() {
 }
 
 
+# Fill out a debian/control template
+build_control() {
+	local SRC="$1" DEST="$2" SHARE="$3" ONLY_MODEL="$4"
+
+	# debian/control substitution variables
+	local -A CONTROL_VARS=(
+		['local:Maintainer']="${OPT_FULLNAME} <${OPT_EMAIL}>"
+		['local:Package-Append']="${OPT_PKGNAME_APPEND}"
+		['local:Revision-Append']="${OPT_REVISION_APPEND}"
+		['local:Installed-Size']="$(du -k -s --apparent-size "$DEST" | cut -f1)"
+	)
+	if [ "$ONLY_MODEL" ]; then
+		CONTROL_VARS['local:Model']="${ONLY_MODEL}"
+	else
+		local CTRL_PROVIDES
+		for MODEL in "${MODELS[@]}"; do
+			CTRL_PROVIDES="${CTRL_PROVIDES:+"${CTRL_PROVIDES}, "}psx-bios-$(sanitize_name "$MODEL")"
+		done
+		CONTROL_VARS['local:Provides']="$CTRL_PROVIDES"
+	fi
+	if [ -e "$SHARE/../debian/changelog" ]; then
+		# This is very hackish, but we cannot rely on
+		# dpkg-parsechangelog to be available  :(
+		CONTROL_VARS['local:Revision']="$(sed -n '1 s/.*(\(.*\)).*/\1/p' "$SHARE/../debian/changelog")"
+	fi
+
+	while IFS="" read CONTROL_LINE; do
+		for VARNAME in "${!CONTROL_VARS[@]}"; do
+			CONTROL_LINE="${CONTROL_LINE//"\${$VARNAME}"/"${CONTROL_VARS["$VARNAME"]}"}"
+		done
+		if [[ "$CONTROL_LINE" == *'${local:Model-List}'* ]]; then
+			for MODEL in "${MODELS[@]}"; do
+				echo "${CONTROL_LINE/'${local:Model-List}'/$MODEL}"
+			done | sort
+		else
+			echo "$CONTROL_LINE"
+		fi
+	done
+}
 
 # Build the filesystem tree for our binary package from an unpacked archive.
 build_deb_tree() {
@@ -477,47 +516,14 @@ build_deb_tree() {
 	# DEBIAN directory
 	mkdir -p "$DEST/DEBIAN"
 
-	# debian/control substitution variables
-	local -A CONTROL_VARS=(
-		['local:Maintainer']="${OPT_FULLNAME} <${OPT_EMAIL}>"
-		['local:Package-Append']="${OPT_PKGNAME_APPEND}"
-		['local:Revision-Append']="${OPT_REVISION_APPEND}"
-		['local:Installed-Size']="$(du -k -s --apparent-size "$DEST" | cut -f1)"
-	)
-	if [ "$ONLY_MODEL" ]; then
-		CONTROL_VARS['local:Model']="${ONLY_MODEL}"
-	else
-		local CTRL_PROVIDES
-		for MODEL in "${MODELS[@]}"; do
-			CTRL_PROVIDES="${CTRL_PROVIDES:+"${CTRL_PROVIDES}, "}psx-bios-$(sanitize_name "$MODEL")"
-		done
-		CONTROL_VARS['local:Provides']="$CTRL_PROVIDES"
-	fi
-	if [ -e "$SHARE/../debian/changelog" ]; then
-		# This is very hackish, but we cannot rely on
-		# dpkg-parsechangelog to be available  :(
-		CONTROL_VARS['local:Revision']="$(sed -n '1 s/.*(\(.*\)).*/\1/p' "$SHARE/../debian/changelog")"
-	fi
-
-	# debian/control itself
+	# Fill out debian/control
 	local CONTROL_FILE
 	if [ "$ONLY_MODEL" ]; then
 		CONTROL_FILE="$SHARE/control"
 	else
 		CONTROL_FILE="$SHARE/control.multi"
 	fi
-	while IFS="" read CONTROL_LINE; do
-		for VARNAME in "${!CONTROL_VARS[@]}"; do
-			CONTROL_LINE="${CONTROL_LINE//"\${$VARNAME}"/"${CONTROL_VARS["$VARNAME"]}"}"
-		done
-		if [[ "$CONTROL_LINE" == *'${local:Model-List}'* ]]; then
-			for MODEL in "${MODELS[@]}"; do
-				echo "${CONTROL_LINE/'${local:Model-List}'/$MODEL}"
-			done | sort
-		else
-			echo "$CONTROL_LINE"
-		fi
-	done < "$CONTROL_FILE" > "$DEST/DEBIAN/control"
+	build_control "$SRC" "$DEST" "$SHARE" "$ONLY_MODEL" < "$CONTROL_FILE" > "$DEST/DEBIAN/control"
 
 	# Generate md5sums (which must be relative to $DEST)
 	(cd "$DEST" && find . -type f \! -regex './\(DEBIAN\|etc\)/.*' -printf '%P\0' \
