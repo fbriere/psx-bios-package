@@ -434,7 +434,7 @@ process() {
 
 # Fill out a debian/control template
 build_control() {
-	local SRC="$1" DEST="$2" SHARE="$3" ONLY_MODEL="$4"
+	local SRC="$1" DEST="$2" SHARE="$3"
 
 	# debian/control substitution variables
 	local -A CONTROL_VARS=(
@@ -443,8 +443,8 @@ build_control() {
 		['local:Revision-Append']="${OPT_REVISION_APPEND}"
 		['local:Installed-Size']="$(du -k -s --apparent-size "$DEST" | cut -f1)"
 	)
-	if [ "$ONLY_MODEL" ]; then
-		CONTROL_VARS['local:Model']="${ONLY_MODEL}"
+	if [ ${#MODELS[@]} -eq 1 ]; then
+		CONTROL_VARS['local:Model']="${MODELS[0]}"
 	else
 		local CTRL_PROVIDES
 		for MODEL in "${MODELS[@]}"; do
@@ -523,7 +523,7 @@ build_deb_tree() {
 	else
 		CONTROL_FILE="$SHARE/control.multi"
 	fi
-	build_control "$SRC" "$DEST" "$SHARE" "$ONLY_MODEL" < "$CONTROL_FILE" > "$DEST/DEBIAN/control"
+	build_control "$SRC" "$DEST" "$SHARE" < "$CONTROL_FILE" > "$DEST/DEBIAN/control"
 
 	# Generate md5sums (which must be relative to $DEST)
 	(cd "$DEST" && find . -type f \! -regex './\(DEBIAN\|etc\)/.*' -printf '%P\0' \
