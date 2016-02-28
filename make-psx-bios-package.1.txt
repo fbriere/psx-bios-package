@@ -38,8 +38,8 @@ OPTIONS
 
 *--package-append* 'string'::
 	Append 'string' to the Debian package name ("psx-bios").  This defaults
-	to a string derived from the BIOS model (yielding a package name such
-	as "psx-bios-scph7001"), or the empty string if the package contains
+	to a string derived from the BIOS version (yielding a package name such
+	as "psx-bios-4.1a"), or "-multi" if the package contains
 	more than one image.
 	+
 	'string' may contain only alphanumerics and the characters + - . (plus,
