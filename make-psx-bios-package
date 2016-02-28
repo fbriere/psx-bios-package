@@ -208,6 +208,7 @@ parse_args() {
 				exit 0
 				;;
 			--package-append)
+				# TODO: Sanitize argument (but leave any leading non-alnum char)
 				OPT_PKGNAME_APPEND="$1"
 				shift
 				;;
