@@ -1,5 +1,5 @@
 Package: psx-bios${local:Package-Append}
-Version: 1:3-${local:Revision}${local:Revision-Append}
+Version: 2:1-${local:Revision}${local:Revision-Append}
 Architecture: all
 Multi-Arch: foreign
 Bugs: mailto:fbriere@fbriere.net
