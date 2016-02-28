@@ -282,7 +282,7 @@ extract_models() {
 
 # Check the MD5 of a file against known values, and output the ROM data line
 get_rom() {
-	echo "${KNOWN_ROMS[$(md5sum "$1" | cut -d ' ' -f 1)]}" |\
+	echo "${KNOWN_ROMS["$(md5sum "$1" | cut -d ' ' -f 1)"]}" |\
 		sed 's/\s\+/ /g'
 }
 
