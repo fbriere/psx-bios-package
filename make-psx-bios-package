@@ -215,6 +215,9 @@ parse_args() {
 			--force)
 				OPT_FORCE=true
 				;;
+			--ignore-bad-files)
+				OPT_IGNORE_BAD=true
+				;;
 
 			--help)
 				usage
@@ -340,11 +343,15 @@ process_single_file() {
 	if [ ! "$ROM" ]; then
 		ROM="$(get_rom_corrupt "$FILENAME")"
 		if [ "$ROM" ]; then
-			echo "The BIOS image found in '$FILENAME' is a corrupted copy of version $(extract_version "$ROM")" >&2
+			echo "The BIOS image found in '$FILENAME' is a corrupted copy of version $(extract_version "$ROM")${OPT_IGNORE_BAD:+" (ignoring)"}" >&2
 		else
-			echo "Cannot determine BIOS version for $FILENAME" >&2
+			echo "Cannot determine BIOS version for $FILENAME${OPT_IGNORE_BAD:+" (ignoring)"}" >&2
 		fi
-		return 1
+		if [ "$OPT_IGNORE_BAD" ]; then
+			return 0
+		else
+			return 1
+		fi
 	fi
 	echo "$ROM"
 
@@ -586,7 +593,7 @@ main() {
 		OPT_SOURCES_FILENAME=( "${OPT_SOURCES_FILENAME[@]}" )
 	done
 
-	if ! ls "$WORK_DIR/images/" >/dev/null 2>&1; then
+	if ! ls "$WORK_DIR"/images/* >/dev/null 2>&1; then
 		echo "No images found" >&2
 		exit 1
 	fi
