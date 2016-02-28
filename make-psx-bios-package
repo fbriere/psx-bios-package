@@ -267,9 +267,10 @@ else
 fi
 
 # Package names may only contain lower case letters, digits, "+", "-" and ".".
+# (Some of these characters can be excluded via $2.)
 # We also don't want filenames starting with a non-alnum character.
 sanitize_name() {
-	echo "$1" | tr '[:upper:]' '[:lower:]' | tr -cd '[:alnum:]+.-' | sed 's/[^[:alnum:]]\+//'
+	echo "$1" | tr '[:upper:]' '[:lower:]' | tr -cd '[:alnum:]+.-' | tr -d "$2" | sed 's/^[^[:alnum:]]\+//'
 }
 
 # Check the MD5 of a file against known values
@@ -323,7 +324,7 @@ process_single_file() {
 	fi
 	echo "$MODEL"
 
-	cp "$FILENAME" "$WORK_DIR/images/${DEST:-$(sanitize_name "$MODEL").bin}"
+	cp "$FILENAME" "$WORK_DIR/images/${DEST:-$(sanitize_name "$MODEL" '-').bin}"
 }
 
 # Process a directory, and print the model
@@ -442,7 +443,7 @@ build_control() {
 	else
 		local CTRL_PROVIDES
 		for MODEL in "${MODELS[@]}"; do
-			CTRL_PROVIDES="${CTRL_PROVIDES:+"${CTRL_PROVIDES}, "}psx-bios-$(sanitize_name "$MODEL")"
+			CTRL_PROVIDES="${CTRL_PROVIDES:+"${CTRL_PROVIDES}, "}psx-bios-$(sanitize_name "$MODEL" '-')"
 		done
 		CONTROL_VARS['local:Provides']="$CTRL_PROVIDES"
 	fi
@@ -478,7 +479,7 @@ build_deb_tree() {
 
 	if [ -z "$OPT_PKGNAME_APPEND" ]; then
 		if [ "$ONLY_MODEL" ]; then
-			OPT_PKGNAME_APPEND="-$(sanitize_name "$ONLY_MODEL")"
+			OPT_PKGNAME_APPEND="-$(sanitize_name "$ONLY_MODEL" '-')"
 		else
 			OPT_PKGNAME_APPEND="-multi"
 		fi
