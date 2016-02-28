@@ -227,8 +227,8 @@ parse_args() {
 				exit 1
 				;;
 			*)
-				OPT_SOURCES=( "${OPT_SOURCES[@]}" "$ARG" )
-				OPT_SOURCES_FILENAME=( "${OPT_SOURCES_FILENAME[@]}" "$OPT_FILENAME" )
+				OPT_SOURCES+=("$ARG")
+				OPT_SOURCES_FILENAME+=("$OPT_FILENAME")
 				unset OPT_FILENAME
 				;;
 		esac
