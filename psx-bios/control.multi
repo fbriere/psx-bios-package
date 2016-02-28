@@ -6,21 +6,23 @@ Bugs: mailto:fbriere@fbriere.net
 Maintainer: ${local:Maintainer}
 Recommends: psx-bios-package
 Enhances: pcsxr
-Provides: psx-bios, ${local:Provides}
-Conflicts: ${local:Provides}
+Provides: psx-bios, ${local:Provides-Versions}, ${local:Provides-Models}
+Conflicts: ${local:Provides-Versions}
 Section: non-free/games
 Priority: extra
 Installed-Size: ${local:Installed-Size}
-Description: Sony PlayStation BIOS (various models)
- This package contains a dump of the Sony PlayStation BIOS from the following
- models:
- .
-  - ${local:Model-List}
+Description: Sony PlayStation BIOS (various versions)
+ This package contains images of multiple versions of the Sony PlayStation BIOS.
  .
  Most PSX emulators require a genuine PlayStation BIOS; even those that
  don't (because they come with an emulated BIOS) will usually work better
  with one.  Some BIOS versions work better than others; you can install
  more than one package concurrently.
+ .
+ The BIOS versions included in this package are used by the following
+ PlayStation models:
+ .
+  - ${local:Model-List}
  .
  You should only download this package if you own a Sony PlayStation.
  The BIOS included is copyrighted by Sony Computer Entertainment.

@@ -29,8 +29,6 @@ VERSION=6
 # lifetime.
 #
 # See http://redump.org/datfile/psx-bios/ for more information.
-#
-# TODO: Handle models with multiple versions (SCPH-1002 & SCPH-102)
 declare -A KNOWN_ROMS=(
 	#           MD5 Hash                        Version                     Models
 	# --------------------------------    -------------------   -----------------------------------------------------------------
@@ -94,7 +92,7 @@ Usage: $0 [ <options> ... ] { <file> | <directory> | <url> } [...]
 Options:
   --fullname <name>            Full name in Maintainer field  [$OPT_FULLNAME]
   --email <email>              Email address in Maintainer field  [$OPT_EMAIL]
-  --package-append <string>    Append to the package name  [<model> or "-multi"]
+  --package-append <string>    Append to the package name  [<bios-version> or "-multi"]
   --revision-append <string>   Append to the revision number  [$OPT_REVISION_APPEND]
   --compress-type <type>       Compression type of resulting package  [$OPT_COMPRESS_TYPE]
   --compress-level <level>     Compression level of resulting package  [${OPT_COMPRESS_LEVEL:-<default>}]
@@ -275,8 +273,11 @@ sanitize_name() {
 
 # Extract information from a ROM data line (some versions include
 # parentheses, so 'eval' is not an option)
-extract_model() {
-       echo "$1" | cut -d ' ' -f 4
+extract_version() {
+       echo "$1" | cut -d ' ' -f 1,2
+}
+extract_models() {
+       echo "$1" | cut -d ' ' -f 4-
 }
 
 # Check the MD5 of a file against known values, and output the ROM data line
@@ -323,12 +324,12 @@ process_single_file() {
 
 	local ROM="$(get_rom "$FILENAME")"
 	if [ ! "$ROM" ]; then
-		echo "Cannot determine model for $FILENAME" >&2
+		echo "Cannot determine BIOS version for $FILENAME" >&2
 		return 1
 	fi
 	echo "$ROM"
 
-	cp "$FILENAME" "$WORK_DIR/images/${DEST:-$(sanitize_name "$(extract_model "$ROM")" '-').bin}"
+	cp "$FILENAME" "$WORK_DIR/images/${DEST:-$(sanitize_name "$(extract_version "$ROM")" '.').bin}"
 }
 
 # Process a directory, and print the ROM line(s)
@@ -443,14 +444,19 @@ build_control() {
 		['local:Installed-Size']="$(du -k -s --apparent-size "$DEST" | cut -f1)"
 	)
 	if [ ${#ROMS[@]} -eq 1 ]; then
-		CONTROL_VARS['local:Model']="$(extract_model "${ROMS[0]}")"
-	else
-		local CTRL_PROVIDES
-		for ROM in "${ROMS[@]}"; do
-			CTRL_PROVIDES="${CTRL_PROVIDES:+"${CTRL_PROVIDES}, "}psx-bios-$(sanitize_name "$(extract_model "$ROM")" '-')"
-		done
-		CONTROL_VARS['local:Provides']="$CTRL_PROVIDES"
+		CONTROL_VARS['local:Version']="$(extract_version "${ROMS[0]}")"
 	fi
+	local CTRL_PROVIDES_MODELS CTRL_PROVIDES_VERSIONS
+	for ROM in "${ROMS[@]}"; do
+		CTRL_PROVIDES_VERSIONS="${CTRL_PROVIDES_VERSIONS:+"${CTRL_PROVIDES_VERSIONS}, "}psx-bios-$(sanitize_name "$(extract_version "$ROM")" '-')"
+
+		for MODEL in $(extract_models "$ROM"); do
+			CTRL_PROVIDES_MODELS="${CTRL_PROVIDES_MODELS:+"${CTRL_PROVIDES_MODELS}, "}psx-bios-$(sanitize_name "$MODEL" '-')"
+		done
+	done
+	CONTROL_VARS['local:Provides-Versions']="$CTRL_PROVIDES_VERSIONS"
+	CONTROL_VARS['local:Provides-Models']="$CTRL_PROVIDES_MODELS"
+
 	if [ -e "$SHARE/../debian/changelog" ]; then
 		# This is very hackish, but we cannot rely on
 		# dpkg-parsechangelog to be available  :(
@@ -463,7 +469,9 @@ build_control() {
 		done
 		if [[ "$CONTROL_LINE" == *'${local:Model-List}'* ]]; then
 			for ROM in "${ROMS[@]}"; do
-				echo "${CONTROL_LINE/'${local:Model-List}'/$(extract_model "$ROM")}"
+				for MODEL in $(extract_models "$ROM"); do
+					echo "${CONTROL_LINE/'${local:Model-List}'/$MODEL}"
+				done
 			done | sort
 		else
 			echo "$CONTROL_LINE"
@@ -483,7 +491,7 @@ build_deb_tree() {
 
 	if [ -z "$OPT_PKGNAME_APPEND" ]; then
 		if [ "$ONLY_ROM" ]; then
-			OPT_PKGNAME_APPEND="-$(sanitize_name "$(extract_model "$ONLY_ROM")" '-')"
+			OPT_PKGNAME_APPEND="-$(sanitize_name "$(extract_version "$ONLY_ROM")")"
 		else
 			OPT_PKGNAME_APPEND="-multi"
 		fi
