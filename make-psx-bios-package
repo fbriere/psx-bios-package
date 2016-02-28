@@ -77,9 +77,11 @@ declare -A KNOWN_ROMS=(
 	#['2118230527a9f51bd9216e32fa912842']=" ?   ?   1994-07-27(?) DTL-H2000"
 
 	# Net Yaroze  (MISSING: DTL-3000)
+)
 
-	# eb201d2d98251a598af467d4347bb62f is a corrupt version of SCPH-5000
-	# e56ec1b027e2fe8a49217d9678f7f6bb is a corrupt version of SCPH-5502
+declare -A CORRUPT_ROMS=(
+	['eb201d2d98251a598af467d4347bb62f']='57a06303dfa9cf9351222dfcbb4a29d9'
+	['e56ec1b027e2fe8a49217d9678f7f6bb']='32736f17079d0b2b7024407c39bd3050'
 )
 
 BIOS_SIZE=524288
@@ -291,6 +293,13 @@ get_rom() {
 	echo "${KNOWN_ROMS["$(md5sum "$1" | cut -d ' ' -f 1)"]}" |\
 		sed 's/\s\+/ /g'
 }
+get_rom_corrupt() {
+	local MD5="${CORRUPT_ROMS["$(md5sum "$1" | cut -d ' ' -f 1)"]}"
+	if [ "$MD5" ]; then
+		echo "${KNOWN_ROMS["$(echo "$MD5" | cut -d ' ' -f 1)"]}" |\
+			sed 's/\s\+/ /g'
+	fi
+}
 
 # Extract the contents of a (possible) archive
 extract() {
@@ -328,7 +337,12 @@ process_single_file() {
 
 	local ROM="$(get_rom "$FILENAME")"
 	if [ ! "$ROM" ]; then
-		echo "Cannot determine BIOS version for $FILENAME" >&2
+		ROM="$(get_rom_corrupt "$FILENAME")"
+		if [ "$ROM" ]; then
+			echo "The BIOS image found in '$FILENAME' is a corrupted copy of version $(extract_version "$ROM")" >&2
+		else
+			echo "Cannot determine BIOS version for $FILENAME" >&2
+		fi
 		return 1
 	fi
 	echo "$ROM"
