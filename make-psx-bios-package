@@ -189,6 +189,12 @@ parse_args() {
 				;;
 			--filename)
 				OPT_FILENAME="$1"
+				if [ "$OPT_FILENAME" ]; then
+					if [ "$OPT_FILENAME" != "$(basename "$OPT_FILENAME")" ]; then
+						echo "--filename must not contain any directory" >&2
+						exit 1
+					fi
+				fi
 				shift
 				;;
 			--list-versions)
