@@ -29,8 +29,6 @@ VERSION=6
 # lifetime.
 #
 # See http://redump.org/datfile/psx-bios/ for more information.
-#
-# TODO: Handle models with multiple versions (SCPH-1002 & SCPH-102)
 declare -A KNOWN_ROMS=(
 	#           MD5 Hash                        Version                     Models
 	# --------------------------------    -------------------   -----------------------------------------------------------------
@@ -89,17 +87,17 @@ BIOS_SIZE=524288
 
 usage() {
 	cat <<EOF
-Usage: $0 [ <options> ... ] [ --model ] { <file> | <directory> | <url> } [...]
+Usage: $0 [ <options> ... ] { <file> | <directory> | <url> } [...]
 
 Options:
   --fullname <name>            Full name in Maintainer field  [$OPT_FULLNAME]
   --email <email>              Email address in Maintainer field  [$OPT_EMAIL]
-  --package-append <string>    Append to the package name  [<model> or "-multi"]
+  --package-append <string>    Append to the package name  [<bios-version> or "-multi"]
   --revision-append <string>   Append to the revision number  [$OPT_REVISION_APPEND]
   --compress-type <type>       Compression type of resulting package  [$OPT_COMPRESS_TYPE]
   --compress-level <level>     Compression level of resulting package  [${OPT_COMPRESS_LEVEL:-<default>}]
 
-  --model <model>              PlayStation model name  [<none>]
+  --filename <filename>        Filename to be used for the next BIOS image
 
   --list-versions              List all known BIOS versions
   --list-models                List all known models
@@ -149,7 +147,7 @@ set_default_args() {
 # Process command-line arguments, setting $OPT_* variables
 parse_args() {
 	# Much easier than messing around with eval set --
-	declare -a -g OPT_SOURCES OPT_SOURCES_MODEL
+	declare -a -g OPT_SOURCES OPT_SOURCES_FILENAME
 
 	local ARG
 
@@ -189,8 +187,8 @@ parse_args() {
 				OPT_COMPRESS_LEVEL="$1"
 				shift
 				;;
-			--model)
-				OPT_MODEL="$1"
+			--filename)
+				OPT_FILENAME="$1"
 				shift
 				;;
 			--list-versions)
@@ -224,8 +222,8 @@ parse_args() {
 				;;
 			*)
 				OPT_SOURCES=( "${OPT_SOURCES[@]}" "$ARG" )
-				OPT_SOURCES_MODEL=( "${OPT_SOURCES_MODEL[@]}" "$OPT_MODEL" )
-				unset OPT_MODEL
+				OPT_SOURCES_FILENAME=( "${OPT_SOURCES_FILENAME[@]}" "$OPT_FILENAME" )
+				unset OPT_FILENAME
 				;;
 		esac
 	done
@@ -267,17 +265,25 @@ else
 fi
 
 # Package names may only contain lower case letters, digits, "+", "-" and ".".
+# (Some of these characters can be excluded via $2.)
 # We also don't want filenames starting with a non-alnum character.
 sanitize_name() {
-	echo "$1" | tr '[:upper:]' '[:lower:]' | tr -cd '[:alnum:]+.-' | sed 's/[^[:alnum:]]\+//'
+	echo "$1" | tr '[:upper:]' '[:lower:]' | tr -cd '[:alnum:]+.-' | tr -d "$2" | sed 's/^[^[:alnum:]]\+//'
 }
 
-# Check the MD5 of a file against known values
-get_model() {
+# Extract information from a ROM data line (some versions include
+# parentheses, so 'eval' is not an option)
+extract_version() {
+       echo "$1" | cut -d ' ' -f 1,2
+}
+extract_models() {
+       echo "$1" | cut -d ' ' -f 4-
+}
+
+# Check the MD5 of a file against known values, and output the ROM data line
+get_rom() {
 	echo "${KNOWN_ROMS[$(md5sum "$1" | cut -d ' ' -f 1)]}" |\
-		sed 's/^\s\+//' |\
-		sed 's/\s\+/ /g' |\
-		cut -d ' ' -f 4
+		sed 's/\s\+/ /g'
 }
 
 # Extract the contents of a (possible) archive
@@ -311,89 +317,83 @@ misc_dir() {
 	fi
 }
 
-# Process a single file, possibly as part of an archive, and print the model
+# Process a single file, possibly as part of an archive, and print the ROM line
 process_single_file() {
-	local WORK_DIR="$1" FILENAME="$2" MODEL="$3"
+	local WORK_DIR="$1" FILENAME="$2" DEST="$3"
 	shift 3
 
-	local REAL_MODEL="$(get_model "$FILENAME")"
-	# FIXME: What should happen if MODEL != REAL_MODEL?
-	if [ ! "$REAL_MODEL" ]; then
-		echo "Cannot determine model for $FILENAME" >&2
-		if [ "$OPT_FORCE" = true -a "$MODEL" ]; then
-			echo "Overriding as requested by --force" >&2
-		else
-			return 1
-		fi
+	local ROM="$(get_rom "$FILENAME")"
+	if [ ! "$ROM" ]; then
+		echo "Cannot determine BIOS version for $FILENAME" >&2
+		return 1
 	fi
-	MODEL="${MODEL:-$REAL_MODEL}"
-	echo "$MODEL"
+	echo "$ROM"
 
-	cp "$FILENAME" "$WORK_DIR/images/$(sanitize_name "$MODEL").bin"
+	cp "$FILENAME" "$WORK_DIR/images/${DEST:-$(sanitize_name "$(extract_version "$ROM")" '.').bin}"
 }
 
-# Process a directory, and print the model
+# Process a directory, and print the ROM line(s)
 process_single_dir() {
-	local WORK_DIR="$1" DIRNAME="$2" MODEL="$3"
+	local WORK_DIR="$1" DIRNAME="$2" DEST="$3"
 
 	while read FILENAME; do
-		process_single_file "$WORK_DIR" "$FILENAME" "$MODEL" || exit
+		process_single_file "$WORK_DIR" "$FILENAME" "$DEST" || exit
 	done < <(find "$DIRNAME" -type f -size ${BIOS_SIZE}c)
 }
 
 # Process a file, either a ROM image or an archive
 process_file() {
-	local WORK_DIR="$1" FILENAME="$2" MODEL="$3"
+	local WORK_DIR="$1" FILENAME="$2" DEST="$3"
 	shift 3
 
 	mkdir -p "$WORK_DIR/tmp"
 	if extract "$FILENAME" "$WORK_DIR/tmp"; then
-		if [ "$MODEL" ]; then
-			# TODO: Maybe allow --model if only one image is found
-			echo "--model cannot be used with an archive file" >&2
+		if [ "$DEST" ]; then
+			# TODO: Maybe allow --filename if only one image is found
+			echo "--filename cannot be used with an archive file" >&2
 			exit 1
 		fi
 
-		process_single_dir "$WORK_DIR" "$WORK_DIR/tmp" "$MODEL" \
-				>> "$WORK_DIR/models" || exit
+		process_single_dir "$WORK_DIR" "$WORK_DIR/tmp" "$DEST" \
+				>> "$WORK_DIR/roms" || exit
 
-		if [ ! -s "$WORK_DIR/models" ]; then
+		if [ ! -s "$WORK_DIR/roms" ]; then
 			echo "Could not find any images in $FILENAME" >&2
 			exit 1
 		fi
 	else
-		process_single_file "$WORK_DIR" "$FILENAME" "$MODEL" \
-			>> "$WORK_DIR/models" || exit
+		process_single_file "$WORK_DIR" "$FILENAME" "$DEST" \
+			>> "$WORK_DIR/roms" || exit
 	fi
 	rm -rf "$WORK_DIR/tmp"
 
-	readarray -t MODELS < "$WORK_DIR/models"
+	readarray -t ROMS < "$WORK_DIR/roms"
 }
 
 # Process a directory
 process_dir() {
-	local WORK_DIR="$1" DIRNAME="$2" MODEL="$3"
+	local WORK_DIR="$1" DIRNAME="$2" DEST="$3"
 
-	if [ "$MODEL" ]; then
-		# TODO: Maybe allow --model if only one image is found
-		echo "--model cannot be used with a directory" >&2
+	if [ "$DEST" ]; then
+		# TODO: Maybe allow --filename if only one image is found
+		echo "--filename cannot be used with a directory" >&2
 		exit 1
 	fi
 
-	process_single_dir "$WORK_DIR" "$DIRNAME" "$MODEL" \
-			>> "$WORK_DIR/models" || exit
+	process_single_dir "$WORK_DIR" "$DIRNAME" "$DEST" \
+			>> "$WORK_DIR/roms" || exit
 
-	if [ ! -s "$WORK_DIR/models" ]; then
+	if [ ! -s "$WORK_DIR/roms" ]; then
 		echo "Could not find any images in $DIRNAME" >&2
 		exit 1
 	fi
 
-	readarray -t MODELS < "$WORK_DIR/models"
+	readarray -t ROMS < "$WORK_DIR/roms"
 }
 
 # Download and process a URL
 process_url() {
-	local WORK_DIR="$1" URL="$2" MODEL="$3"
+	local WORK_DIR="$1" URL="$2" DEST="$3"
 	shift 3
 
 	case "$URL" in
@@ -406,23 +406,23 @@ process_url() {
 	esac
 
 	download "$URL" "$WORK_DIR/tmp.bin" \
-		&& process_file "$WORK_DIR" "$WORK_DIR/tmp.bin" "$MODEL"
+		&& process_file "$WORK_DIR" "$WORK_DIR/tmp.bin" "$DEST"
 }
 
 # Process either a file or URL
 process() {
-	local WORK_DIR="$1" ARG="$2" MODEL="$3"
+	local WORK_DIR="$1" ARG="$2" DEST="$3"
 	shift 3
 
 	case "$ARG" in
 		http://* | ftp://*)
-			process_url "$WORK_DIR" "$ARG" "$MODEL"
+			process_url "$WORK_DIR" "$ARG" "$DEST"
 			;;
 		*)
 			if [ -f "$ARG" ]; then
-				process_file "$WORK_DIR" "$ARG" "$MODEL"
+				process_file "$WORK_DIR" "$ARG" "$DEST"
 			elif [ -d "$ARG" ]; then
-				process_dir "$WORK_DIR" "$ARG" "$MODEL"
+				process_dir "$WORK_DIR" "$ARG" "$DEST"
 			else
 				echo "$0: $ARG: No such file or directory" >&2
 				return 1
@@ -443,15 +443,20 @@ build_control() {
 		['local:Revision-Append']="${OPT_REVISION_APPEND}"
 		['local:Installed-Size']="$(du -k -s --apparent-size "$DEST" | cut -f1)"
 	)
-	if [ ${#MODELS[@]} -eq 1 ]; then
-		CONTROL_VARS['local:Model']="${MODELS[0]}"
-	else
-		local CTRL_PROVIDES
-		for MODEL in "${MODELS[@]}"; do
-			CTRL_PROVIDES="${CTRL_PROVIDES:+"${CTRL_PROVIDES}, "}psx-bios-$(sanitize_name "$MODEL")"
-		done
-		CONTROL_VARS['local:Provides']="$CTRL_PROVIDES"
+	if [ ${#ROMS[@]} -eq 1 ]; then
+		CONTROL_VARS['local:Version']="$(extract_version "${ROMS[0]}")"
 	fi
+	local CTRL_PROVIDES_MODELS CTRL_PROVIDES_VERSIONS
+	for ROM in "${ROMS[@]}"; do
+		CTRL_PROVIDES_VERSIONS="${CTRL_PROVIDES_VERSIONS:+"${CTRL_PROVIDES_VERSIONS}, "}psx-bios-$(sanitize_name "$(extract_version "$ROM")" '-')"
+
+		for MODEL in $(extract_models "$ROM"); do
+			CTRL_PROVIDES_MODELS="${CTRL_PROVIDES_MODELS:+"${CTRL_PROVIDES_MODELS}, "}psx-bios-$(sanitize_name "$MODEL" '-')"
+		done
+	done
+	CONTROL_VARS['local:Provides-Versions']="$CTRL_PROVIDES_VERSIONS"
+	CONTROL_VARS['local:Provides-Models']="$CTRL_PROVIDES_MODELS"
+
 	if [ -e "$SHARE/../debian/changelog" ]; then
 		# This is very hackish, but we cannot rely on
 		# dpkg-parsechangelog to be available  :(
@@ -463,8 +468,10 @@ build_control() {
 			CONTROL_LINE="${CONTROL_LINE//"\${$VARNAME}"/"${CONTROL_VARS["$VARNAME"]}"}"
 		done
 		if [[ "$CONTROL_LINE" == *'${local:Model-List}'* ]]; then
-			for MODEL in "${MODELS[@]}"; do
-				echo "${CONTROL_LINE/'${local:Model-List}'/$MODEL}"
+			for ROM in "${ROMS[@]}"; do
+				for MODEL in $(extract_models "$ROM"); do
+					echo "${CONTROL_LINE/'${local:Model-List}'/$MODEL}"
+				done
 			done | sort
 		else
 			echo "$CONTROL_LINE"
@@ -477,14 +484,14 @@ build_deb_tree() {
 	local SRC="$1" DEST="$2"
 	shift 2
 
-	local ONLY_MODEL
-	if [ ${#MODELS[@]} -eq 1 ]; then
-		ONLY_MODEL="${MODELS[0]}"
+	local ONLY_ROM
+	if [ ${#ROMS[@]} -eq 1 ]; then
+		ONLY_ROM="${ROMS[0]}"
 	fi
 
 	if [ -z "$OPT_PKGNAME_APPEND" ]; then
-		if [ "$ONLY_MODEL" ]; then
-			OPT_PKGNAME_APPEND="-$(sanitize_name "$ONLY_MODEL")"
+		if [ "$ONLY_ROM" ]; then
+			OPT_PKGNAME_APPEND="-$(sanitize_name "$(extract_version "$ONLY_ROM")")"
 		else
 			OPT_PKGNAME_APPEND="-multi"
 		fi
@@ -518,7 +525,7 @@ build_deb_tree() {
 
 	# Fill out debian/control
 	local CONTROL_FILE
-	if [ "$ONLY_MODEL" ]; then
+	if [ "$ONLY_ROM" ]; then
 		CONTROL_FILE="$SHARE/control"
 	else
 		CONTROL_FILE="$SHARE/control.multi"
@@ -547,15 +554,15 @@ main() {
 	local WORK_DIR="$(mktemp --directory --tmpdir)"
 	trap "rm -rf '$WORK_DIR'" EXIT
 
-	local -a MODELS
+	local -a ROMS
 	mkdir -p "$WORK_DIR/images"
 	for SOURCE in "${OPT_SOURCES[@]}"; do
-		if ! process "$WORK_DIR" "$SOURCE" "${OPT_SOURCES_MODEL[0]}"; then
+		if ! process "$WORK_DIR" "$SOURCE" "${OPT_SOURCES_FILENAME[0]}"; then
 			echo "Cannot process $SOURCE" >&2
 			exit 1
 		fi
-		unset OPT_SOURCES_MODEL[0]
-		OPT_SOURCES_MODEL=( "${OPT_SOURCES_MODEL[@]}" )
+		unset OPT_SOURCES_FILENAME[0]
+		OPT_SOURCES_FILENAME=( "${OPT_SOURCES_FILENAME[@]}" )
 	done
 
 	if ! ls "$WORK_DIR/images/" >/dev/null 2>&1; then
