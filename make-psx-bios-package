@@ -295,7 +295,6 @@ get_rom() {
 # Extract the contents of a (possible) archive
 extract() {
 	local FILE="$1" DEST="$2"
-	shift 2
 
 	# --test-label does not appear to work  :(
 	if tar -t -f "$FILE" >/dev/null 2>&1; then
@@ -326,7 +325,6 @@ misc_dir() {
 # Process a single file, possibly as part of an archive, and print the ROM line
 process_single_file() {
 	local WORK_DIR="$1" FILENAME="$2" DEST="$3"
-	shift 3
 
 	local ROM="$(get_rom "$FILENAME")"
 	if [ ! "$ROM" ]; then
@@ -352,7 +350,6 @@ process_single_dir() {
 # Process a file, either a ROM image or an archive
 process_file() {
 	local WORK_DIR="$1" FILENAME="$2" DEST="$3"
-	shift 3
 
 	mkdir -p "$WORK_DIR/tmp"
 	if extract "$FILENAME" "$WORK_DIR/tmp"; then
@@ -402,7 +399,6 @@ process_dir() {
 # Download and process a URL
 process_url() {
 	local WORK_DIR="$1" URL="$2" DEST="$3"
-	shift 3
 
 	case "$URL" in
 		*.zip | *.ZIP)
@@ -420,7 +416,6 @@ process_url() {
 # Process either a file or URL
 process() {
 	local WORK_DIR="$1" ARG="$2" DEST="$3"
-	shift 3
 
 	case "$ARG" in
 		http://* | ftp://*)
@@ -494,7 +489,6 @@ build_control() {
 # Build the filesystem tree for our binary package from an unpacked archive.
 build_deb_tree() {
 	local SRC="$1" DEST="$2"
-	shift 2
 
 	local ONLY_ROM
 	if [ ${#ROMS[@]} -eq 1 ]; then
