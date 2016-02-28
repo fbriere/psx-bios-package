@@ -447,11 +447,15 @@ build_control() {
 		CONTROL_VARS['local:Version']="$(extract_version "${ROMS[0]}")"
 	fi
 	local CTRL_PROVIDES_MODELS CTRL_PROVIDES_VERSIONS
+	local -A CTRL_PROVIDES_MODELS_SEEN
 	for ROM in "${ROMS[@]}"; do
 		CTRL_PROVIDES_VERSIONS="${CTRL_PROVIDES_VERSIONS:+"${CTRL_PROVIDES_VERSIONS}, "}psx-bios-$(sanitize_name "$(extract_version "$ROM")" '-')"
 
 		for MODEL in $(extract_models "$ROM"); do
-			CTRL_PROVIDES_MODELS="${CTRL_PROVIDES_MODELS:+"${CTRL_PROVIDES_MODELS}, "}psx-bios-$(sanitize_name "$MODEL" '-')"
+			if [ -z "${CTRL_PROVIDES_MODELS_SEEN["$MODEL"]}" ]; then
+				CTRL_PROVIDES_MODELS="${CTRL_PROVIDES_MODELS:+"${CTRL_PROVIDES_MODELS}, "}psx-bios-$(sanitize_name "$MODEL" '-')"
+				CTRL_PROVIDES_MODELS_SEEN["$MODEL"]=true
+			fi
 		done
 	done
 	CONTROL_VARS['local:Provides-Versions']="$CTRL_PROVIDES_VERSIONS"
@@ -472,7 +476,7 @@ build_control() {
 				for MODEL in $(extract_models "$ROM"); do
 					echo "${CONTROL_LINE/'${local:Model-List}'/$MODEL}"
 				done
-			done | sort
+			done | sort -u
 		else
 			echo "$CONTROL_LINE"
 		fi
