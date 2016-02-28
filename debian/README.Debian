@@ -1,0 +1,13 @@
+psx-bios-package
+----------------
+
+To use this package, run the 'make-psx-bios-package' command, with one or
+several Sony PlayStation BIOS image file(s) as argument(s).  This will bundle
+them all into a single Debian package (.deb file).
+
+The resulting package can be installed with the command 'dpkg --install'.
+
+Keep in mind that these files are copyrighted by Sony Computer Entertainment.
+Download and use at your own risk.
+
+ -- Frédéric Brière <fbriere@fbriere.net>, Sun, 28 Feb 2016 16:56:16 -0500
