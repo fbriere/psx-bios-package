@@ -13,7 +13,6 @@ Architecture: all
 Multi-Arch: foreign
 Depends: ${misc:Depends}, fakeroot
 Recommends: unzip, wget | curl
-Provides: psx-bios
 Enhances: pcsxr
 Description: Debian packager for Sony PlayStation BIOS images
  Most PSX emulators require a genuine PlayStation BIOS; even those that
