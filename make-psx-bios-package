@@ -273,12 +273,16 @@ sanitize_name() {
 	echo "$1" | tr '[:upper:]' '[:lower:]' | tr -cd '[:alnum:]+.-' | tr -d "$2" | sed 's/^[^[:alnum:]]\+//'
 }
 
-# Check the MD5 of a file against known values
-get_model() {
+# Extract information from a ROM data line (some versions include
+# parentheses, so 'eval' is not an option)
+extract_model() {
+       echo "$1" | cut -d ' ' -f 4
+}
+
+# Check the MD5 of a file against known values, and output the ROM data line
+get_rom() {
 	echo "${KNOWN_ROMS[$(md5sum "$1" | cut -d ' ' -f 1)]}" |\
-		sed 's/^\s\+//' |\
-		sed 's/\s\+/ /g' |\
-		cut -d ' ' -f 4
+		sed 's/\s\+/ /g'
 }
 
 # Extract the contents of a (possible) archive
@@ -312,22 +316,22 @@ misc_dir() {
 	fi
 }
 
-# Process a single file, possibly as part of an archive, and print the model
+# Process a single file, possibly as part of an archive, and print the ROM line
 process_single_file() {
 	local WORK_DIR="$1" FILENAME="$2" DEST="$3"
 	shift 3
 
-	local MODEL="$(get_model "$FILENAME")"
-	if [ ! "$MODEL" ]; then
+	local ROM="$(get_rom "$FILENAME")"
+	if [ ! "$ROM" ]; then
 		echo "Cannot determine model for $FILENAME" >&2
 		return 1
 	fi
-	echo "$MODEL"
+	echo "$ROM"
 
-	cp "$FILENAME" "$WORK_DIR/images/${DEST:-$(sanitize_name "$MODEL" '-').bin}"
+	cp "$FILENAME" "$WORK_DIR/images/${DEST:-$(sanitize_name "$(extract_model "$ROM")" '-').bin}"
 }
 
-# Process a directory, and print the model
+# Process a directory, and print the ROM line(s)
 process_single_dir() {
 	local WORK_DIR="$1" DIRNAME="$2" DEST="$3"
 
@@ -350,19 +354,19 @@ process_file() {
 		fi
 
 		process_single_dir "$WORK_DIR" "$WORK_DIR/tmp" "$DEST" \
-				>> "$WORK_DIR/models" || exit
+				>> "$WORK_DIR/roms" || exit
 
-		if [ ! -s "$WORK_DIR/models" ]; then
+		if [ ! -s "$WORK_DIR/roms" ]; then
 			echo "Could not find any images in $FILENAME" >&2
 			exit 1
 		fi
 	else
 		process_single_file "$WORK_DIR" "$FILENAME" "$DEST" \
-			>> "$WORK_DIR/models" || exit
+			>> "$WORK_DIR/roms" || exit
 	fi
 	rm -rf "$WORK_DIR/tmp"
 
-	readarray -t MODELS < "$WORK_DIR/models"
+	readarray -t ROMS < "$WORK_DIR/roms"
 }
 
 # Process a directory
@@ -376,14 +380,14 @@ process_dir() {
 	fi
 
 	process_single_dir "$WORK_DIR" "$DIRNAME" "$DEST" \
-			>> "$WORK_DIR/models" || exit
+			>> "$WORK_DIR/roms" || exit
 
-	if [ ! -s "$WORK_DIR/models" ]; then
+	if [ ! -s "$WORK_DIR/roms" ]; then
 		echo "Could not find any images in $DIRNAME" >&2
 		exit 1
 	fi
 
-	readarray -t MODELS < "$WORK_DIR/models"
+	readarray -t ROMS < "$WORK_DIR/roms"
 }
 
 # Download and process a URL
@@ -438,12 +442,12 @@ build_control() {
 		['local:Revision-Append']="${OPT_REVISION_APPEND}"
 		['local:Installed-Size']="$(du -k -s --apparent-size "$DEST" | cut -f1)"
 	)
-	if [ ${#MODELS[@]} -eq 1 ]; then
-		CONTROL_VARS['local:Model']="${MODELS[0]}"
+	if [ ${#ROMS[@]} -eq 1 ]; then
+		CONTROL_VARS['local:Model']="$(extract_model "${ROMS[0]}")"
 	else
 		local CTRL_PROVIDES
-		for MODEL in "${MODELS[@]}"; do
-			CTRL_PROVIDES="${CTRL_PROVIDES:+"${CTRL_PROVIDES}, "}psx-bios-$(sanitize_name "$MODEL" '-')"
+		for ROM in "${ROMS[@]}"; do
+			CTRL_PROVIDES="${CTRL_PROVIDES:+"${CTRL_PROVIDES}, "}psx-bios-$(sanitize_name "$(extract_model "$ROM")" '-')"
 		done
 		CONTROL_VARS['local:Provides']="$CTRL_PROVIDES"
 	fi
@@ -458,8 +462,8 @@ build_control() {
 			CONTROL_LINE="${CONTROL_LINE//"\${$VARNAME}"/"${CONTROL_VARS["$VARNAME"]}"}"
 		done
 		if [[ "$CONTROL_LINE" == *'${local:Model-List}'* ]]; then
-			for MODEL in "${MODELS[@]}"; do
-				echo "${CONTROL_LINE/'${local:Model-List}'/$MODEL}"
+			for ROM in "${ROMS[@]}"; do
+				echo "${CONTROL_LINE/'${local:Model-List}'/$(extract_model "$ROM")}"
 			done | sort
 		else
 			echo "$CONTROL_LINE"
@@ -472,14 +476,14 @@ build_deb_tree() {
 	local SRC="$1" DEST="$2"
 	shift 2
 
-	local ONLY_MODEL
-	if [ ${#MODELS[@]} -eq 1 ]; then
-		ONLY_MODEL="${MODELS[0]}"
+	local ONLY_ROM
+	if [ ${#ROMS[@]} -eq 1 ]; then
+		ONLY_ROM="${ROMS[0]}"
 	fi
 
 	if [ -z "$OPT_PKGNAME_APPEND" ]; then
-		if [ "$ONLY_MODEL" ]; then
-			OPT_PKGNAME_APPEND="-$(sanitize_name "$ONLY_MODEL" '-')"
+		if [ "$ONLY_ROM" ]; then
+			OPT_PKGNAME_APPEND="-$(sanitize_name "$(extract_model "$ONLY_ROM")" '-')"
 		else
 			OPT_PKGNAME_APPEND="-multi"
 		fi
@@ -513,7 +517,7 @@ build_deb_tree() {
 
 	# Fill out debian/control
 	local CONTROL_FILE
-	if [ "$ONLY_MODEL" ]; then
+	if [ "$ONLY_ROM" ]; then
 		CONTROL_FILE="$SHARE/control"
 	else
 		CONTROL_FILE="$SHARE/control.multi"
@@ -542,7 +546,7 @@ main() {
 	local WORK_DIR="$(mktemp --directory --tmpdir)"
 	trap "rm -rf '$WORK_DIR'" EXIT
 
-	local -a MODELS
+	local -a ROMS
 	mkdir -p "$WORK_DIR/images"
 	for SOURCE in "${OPT_SOURCES[@]}"; do
 		if ! process "$WORK_DIR" "$SOURCE" "${OPT_SOURCES_FILENAME[0]}"; then
