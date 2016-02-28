@@ -11,8 +11,8 @@ Bugs: mailto:fbriere@fbriere.net
 Package: psx-bios-package
 Architecture: all
 Multi-Arch: foreign
-Depends: ${misc:Depends}, fakeroot, wget | curl
-Recommends: unzip
+Depends: ${misc:Depends}, fakeroot
+Recommends: unzip, wget | curl
 Provides: psx-bios
 Enhances: pcsxr
 Description: Debian packager for Sony PlayStation BIOS images
