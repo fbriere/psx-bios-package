@@ -329,7 +329,9 @@ process_single_file() {
 	fi
 	echo "$ROM"
 
-	cp "$FILENAME" "$WORK_DIR/images/${DEST:-$(sanitize_name "$(extract_version "$ROM")" '.').bin}"
+	DEST="$WORK_DIR/images/${DEST:-$(sanitize_name "$(extract_version "$ROM")" '.').bin}"
+	# FIXME: What should we do if $DEST already exists?
+	ln "$FILENAME" "$DEST" 2>/dev/null || cp "$FILENAME" "$DEST"
 }
 
 # Process a directory, and print the ROM line(s)
@@ -509,7 +511,7 @@ build_deb_tree() {
 	local DOC="$DEST/usr/share/doc/${PKGNAME}"
 
 	mkdir -p "$DEST/usr/share/psemu/bios"
-	cp "$SRC"/* "$DEST/usr/share/psemu/bios/"
+	ln "$SRC"/* "$DEST/usr/share/psemu/bios/"
 
 	# Documentation (under /usr/share/doc/psx-bios[-append])
 	mkdir -p "$DOC"
