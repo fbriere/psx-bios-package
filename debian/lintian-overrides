@@ -1,0 +1,3 @@
+psx-bios-package: package-section-games-but-contains-no-game
+psx-bios-package: latest-debian-changelog-entry-without-new-version
+psx-bios-package: latest-debian-changelog-entry-changed-to-native
