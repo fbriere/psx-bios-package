@@ -1,4 +1,5 @@
 Package: psx-bios${local:Package-Append}
+Source: psx-bios-package
 Version: 2:1-${local:Revision}${local:Revision-Append}
 Architecture: all
 Multi-Arch: foreign
