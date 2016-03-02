@@ -440,7 +440,7 @@ process() {
 	local WORK_DIR="$1" ARG="$2" DEST="$3"
 
 	case "$ARG" in
-		http://* | ftp://*)
+		http://* | https://* | ftp://*)
 			process_url "$WORK_DIR" "$ARG" "$DEST"
 			;;
 		*)
