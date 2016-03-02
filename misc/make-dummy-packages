@@ -16,25 +16,18 @@ declare TARGETS=(
 )
 
 CONTROL='
-	Source: psx-bios-package
-	Section: non-free/games
-	Priority: extra
-	# Homepage: <enter URL here; no default>
-	Standards-Version: 3.9.7
-
 	Package: psx-bios-${local:Model-Package}
-	# The version from the changelog will take precedence  :-(
-	Version: 2:1-${local:Revision}${local:Revision-Append}
+	Source: psx-bios-package
+	Version: ${local:Version}
+	Architecture: all
+	Bugs: mailto:fbriere@fbriere.net
 	Maintainer: Frédéric Brière <fbriere@fbriere.net>
+	Installed-Size: 8
 	Depends: ${local:Depends}
 	Recommends: psx-bios-package
-	Architecture: all
+	Section: non-free/games
+	Priority: extra
 	Multi-Arch: foreign
-	Copyright: psx-bios/copyright
-	Changelog: debian/changelog
-	# README.Debian cannot be omitted  :-(
-	Readme: /dev/null
-	Bugs: mailto:fbriere@fbriere.net
 	Description: Sony PlayStation BIOS (model ${local:Model}) (transitional package)
 	 This is a transitional package and can safely be removed.
 '
@@ -95,17 +88,14 @@ sanitize_name() {
 	echo "$1" | tr '[:upper:]' '[:lower:]' | tr -cd '[:alnum:]+.-' | tr -d "$2" | sed 's/^[^[:alnum:]]\+//'
 }
 
+# Fill out a debian/control template
+build_control() {
+	local TARGET="$1"
 
-TMPFILE="$(mktemp --tmpdir)"
-trap "rm -f '$TMPFILE'" EXIT
-
-for TARGET in "${TARGETS[@]}"; do
 	declare -A CONTROL_VARS=(
 		['local:Model']="${TARGET}"
 		['local:Model-Package']="$(sanitize_name "${TARGET}" '-')"
-		['local:Revision']="$(sed -n '1 s/.*(\(.*\)).*/\1/p' "debian/changelog")"
-		# ${local:Revision-Append} doesn't actually work, though
-		['local:Revision-Append']="+fbriere.1"
+		['local:Version']="$PKG_VERSION"
 	)
 
 	DEPENDS=
@@ -127,10 +117,54 @@ for TARGET in "${TARGETS[@]}"; do
 			CONTROL_LINE="${CONTROL_LINE//"\${$VARNAME}"/"${CONTROL_VARS["$VARNAME"]}"}"
 		done
 		echo "$CONTROL_LINE" | sed -e 's/^\s//' -e '/^$/d'
-	done <<< "$CONTROL" > "$TMPFILE"
+	done
+}
 
-	equivs-build "$TMPFILE"
-done
+build_deb_tree() {
+	local DEST="$1" TARGET="$2"
 
-rm -f "$TMPFILE"
-trap - EXIT
+	local PKGNAME="$(sanitize_name "$TARGET" '-')"
+
+	# Documentation (under /usr/share/doc/psx-bios[-append])
+	local DOC="$DEST/usr/share/doc/$PKGNAME"
+	mkdir -p "$DOC"
+	cp "debian/copyright" "$DOC/"
+	gzip -9 -c --no-name "debian/changelog" > "$DOC/changelog.gz"
+
+	mkdir -p "$DEST/DEBIAN"
+
+	build_control "$TARGET" "$PKG_VERSION" \
+		<<< "$CONTROL" > "$DEST/DEBIAN/control"
+
+	# Generate md5sums (which must be relative to $DEST)
+	(cd "$DEST" && find . -type f \! -regex './\(DEBIAN\|etc\)/.*' -printf '%P\0' \
+		| LC_ALL=C sort --zero-terminated \
+		| xargs -0 md5sum) > "$DEST/DEBIAN/md5sums"
+
+	# Fix permissions
+	find "$DEST" -type f -print0 | xargs -0 chmod 644
+	find "$DEST" -type d -print0 | xargs -0 chmod 755
+}
+
+main() {
+	local REVISION_APPEND="$1"
+	local PKG_VERSION="2:1-$(sed -n '1 s/.*(\(.*\)).*/\1/p' "debian/changelog")${REVISION_APPEND}"
+
+	# Temporary workspace
+	local WORK_DIR="$(mktemp --directory --tmpdir)"
+	trap "echo rm -rf '$WORK_DIR'" EXIT
+
+	for TARGET in "${TARGETS[@]}"; do
+		mkdir "$WORK_DIR/build"
+		build_deb_tree "$WORK_DIR/build" "$TARGET"
+
+		fakeroot dpkg-deb --build "$WORK_DIR/build" .
+
+		rm -rf "$WORK_DIR/build"
+	done
+
+	rm -rf "$WORK_DIR"
+	trap - EXIT
+}
+
+main "$@"
