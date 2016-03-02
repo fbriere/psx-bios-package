@@ -1,6 +1,4 @@
-psx-bios-package (6~1.gbpdc2f66) UNRELEASED; urgency=medium
-
-  ** SNAPSHOT build @dc2f663cd547b5c1f16019f839221cea83bc7021 **
+psx-bios-package (6) unstable; urgency=medium
 
   * Converted the psx-bios packages to a psx-bios packager
   * Install ROMs under /usr/share/psemu/bios -- this is where pcsxr looks
@@ -10,8 +8,9 @@ psx-bios-package (6~1.gbpdc2f66) UNRELEASED; urgency=medium
     - Bumped "upstream" version
     - Mark packages as Multi-Arch: foreign
     - Bumped Standards-Version to 3.9.7
+    - Moved repository to GitHub
 
- -- Frédéric Brière <fbriere@fbriere.net>  Sun, 28 Feb 2016 19:01:47 -0500
+ -- Frédéric Brière <fbriere@fbriere.net>  Wed, 02 Mar 2016 12:32:12 -0500
 
 psx-bios (1:3-1~fbriere+5) unstable; urgency=low
 
