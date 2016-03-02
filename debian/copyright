@@ -1,7 +1,7 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: psx-bios-package
 Upstream-Contact: Frédéric Brière <fbriere@fbriere.net>
-Source: http://git.fbriere.net/debian/psx-bios-package.git/
+Source: https://github.com/fbriere/psx-bios-package
 Disclaimer:
  The BIOS image(s) downloaded by this package are copyrighted by Sony Computer
  Entertainment.  Download and use at your own risk.

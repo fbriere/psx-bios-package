@@ -4,8 +4,9 @@ Priority: extra
 Maintainer: Frédéric Brière <fbriere@fbriere.net>
 Build-Depends: debhelper (>= 9),  asciidoc, xmlto
 Standards-Version: 3.9.7
-Vcs-Git: http://git.fbriere.net/debian/psx-bios-package.git
-Vcs-Browser: http://git.fbriere.net/debian/psx-bios-package.git/
+Vcs-Git: https://github.com/fbriere/psx-bios-package.git
+Vcs-Browser: https://github.com/fbriere/psx-bios-package
+Homepage: https://github.com/fbriere/psx-bios-package
 Bugs: mailto:fbriere@fbriere.net
 
 Package: psx-bios-package
