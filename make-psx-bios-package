@@ -224,7 +224,7 @@ parse_args() {
 				exit 0
 				;;
 			--version)
-				echo "make-eawpatches-package version $VERSION"
+				echo "make-psx-bios-package version $VERSION"
 				exit 0
 				;;
 			--*)
