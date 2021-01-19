@@ -18,11 +18,11 @@ Requirements
 Using psx-bios-package
 ========================
 
-To use this package, run the 'make-psx-bios-package' command, with one or
+To use this package, run the `make-psx-bios-package` command, with one or
 more filename or URL of BIOS images.  This will create a Debian package
 (.deb file) containing all images.
 
-The Debian package can be installed with the command 'dpkg --install'.
+The Debian package can be installed with the command `dpkg --install`.
 
 Legal warning
 -------------
@@ -35,7 +35,7 @@ Development
 
 This program and its source code can be downloaded from GitHub:
 
-    https://github.com/fbriere/psx-bios-package
+https://github.com/fbriere/psx-bios-package
 
 Feedback
 ========
@@ -49,5 +49,5 @@ may have about this program.  Feedback is always appreciated.  :)
 Author
 =======
 
-Frédéric Brière  <fbriere@fbriere.net>
+Frédéric Brière - fbriere@fbriere.net
 
